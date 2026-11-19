@@ -4,7 +4,7 @@ import {
   Search, Plus, Heart, MessageSquare, User, MapPin, ArrowLeftRight, Send,
   LogOut, Package, Briefcase, X, Check, RefreshCw, ArrowLeft, Upload, Bell, Star,
   Pencil, Trash2, Pause, Play, CheckCircle2, Settings, HelpCircle, AlertTriangle,
-  MessageCircleHeart, ChevronDown, ChevronUp, ShieldCheck, FileText, Scale, Sparkles
+  MessageCircleHeart, ChevronDown, ChevronUp, ShieldCheck, FileText, Scale, Sparkles, WifiOff
 } from 'lucide-react';
 
 const SUPPORT_EMAIL = 'barterboxsupport@gmail.com';
@@ -678,6 +678,9 @@ function PrivacyPolicyModal({ onClose, onAccept }) {
 }
 
 export default function App() {
+  const [isOnline, setIsOnline] = useState(() =>
+    typeof navigator === 'undefined' ? true : navigator.onLine
+  );
   const [installPrompt, setInstallPrompt] = useState(null);
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [isInstalled, setIsInstalled] = useState(() => {
@@ -772,6 +775,17 @@ export default function App() {
 
   const uid = session?.user?.id;
   const setF = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia('(display-mode: standalone)');
@@ -1064,16 +1078,9 @@ export default function App() {
   };
 
   const fetchProposals = async () => {
-    const baseSelect = `
-      *,
-      sender:profiles!trade_proposals_sender_id_fkey(full_name, city),
-      receiver:profiles!trade_proposals_receiver_id_fkey(full_name, city),
-      target_listing:listings!trade_proposals_target_listing_id_fkey(id, title, image_url, type),
-      offered_listing:listings!trade_proposals_offered_listing_id_fkey(id, title, image_url, type),
-      completion:trade_completions(*),
-      reviews(reviewer_id)
-    `;
-    const withConditionSelect = `
+    if (!supabase || !uid) return;
+
+    const richSelect = `
       *,
       sender:profiles!trade_proposals_sender_id_fkey(full_name, city),
       receiver:profiles!trade_proposals_receiver_id_fkey(full_name, city),
@@ -1083,21 +1090,60 @@ export default function App() {
       reviews(reviewer_id)
     `;
 
-    let { data, error } = await supabase
+    const { data: richData, error } = await supabase
       .from('trade_proposals')
-      .select(withConditionSelect)
+      .select(richSelect)
       .or(`sender_id.eq.${uid},receiver_id.eq.${uid}`)
       .order('created_at', { ascending: false });
 
-    if (error && error.message.toLowerCase().includes('condition')) {
-      ({ data } = await supabase
-        .from('trade_proposals')
-        .select(baseSelect)
-        .or(`sender_id.eq.${uid},receiver_id.eq.${uid}`)
-        .order('created_at', { ascending: false }));
+    if (!error && richData) {
+      setProposals(richData);
+      return;
     }
 
-    if (data) setProposals(data);
+    const { data: baseRows, error: baseError } = await supabase
+      .from('trade_proposals')
+      .select('*')
+      .or(`sender_id.eq.${uid},receiver_id.eq.${uid}`)
+      .order('created_at', { ascending: false });
+
+    if (baseError || !baseRows) {
+      console.warn('Could not load trade proposals:', baseError?.message || error?.message);
+      return;
+    }
+
+    const profileIds = [
+      ...new Set(baseRows.flatMap((p) => [p.sender_id, p.receiver_id]).filter(Boolean))
+    ];
+    const listingIds = [
+      ...new Set(
+        baseRows.flatMap((p) => [p.target_listing_id, p.offered_listing_id]).filter(Boolean)
+      )
+    ];
+
+    const [profilesRes, listingsRes] = await Promise.all([
+      profileIds.length > 0
+        ? supabase.from('profiles').select('id, full_name, city').in('id', profileIds)
+        : Promise.resolve({ data: [] }),
+      listingIds.length > 0
+        ? supabase.from('listings').select('*').in('id', listingIds)
+        : Promise.resolve({ data: [] })
+    ]);
+
+    const profileById = Object.fromEntries((profilesRes.data || []).map((pr) => [pr.id, pr]));
+    const listingById = Object.fromEntries((listingsRes.data || []).map((li) => [li.id, li]));
+
+    setProposals(
+      baseRows.map((p) => ({
+        ...p,
+        sender: profileById[p.sender_id] || null,
+        receiver: profileById[p.receiver_id] || null,
+        target_listing: listingById[p.target_listing_id] || null,
+        offered_listing: p.offered_listing_id ? listingById[p.offered_listing_id] || null : null,
+        completion: p.completion || [],
+        reviews: p.reviews || []
+      }))
+    );
   };
 
   const fetchNotifications = async () => {
@@ -1107,10 +1153,50 @@ export default function App() {
   };
 
   const fetchMyReviews = async () => {
-    const { data } = await supabase.from('reviews')
+    if (!supabase || !uid) return;
+
+    const { data: joinedData, error } = await supabase
+      .from('reviews')
       .select('*, reviewer:profiles!reviews_reviewer_id_fkey(full_name)')
-      .eq('reviewee_id', uid).order('created_at', { ascending: false }).limit(10);
-    if (data) setMyReviews(data);
+      .eq('reviewee_id', uid)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (!error && joinedData) {
+      setMyReviews(joinedData);
+      return;
+    }
+
+    const { data: plainData, error: plainError } = await supabase
+      .from('reviews')
+      .select('*')
+      .eq('reviewee_id', uid)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (plainError || !plainData) {
+      console.warn('Could not load reviews:', plainError?.message || error?.message);
+      return;
+    }
+
+    const reviewerIds = [...new Set(plainData.map((r) => r.reviewer_id).filter(Boolean))];
+    let nameMap = {};
+    if (reviewerIds.length > 0) {
+      const { data: profs } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .in('id', reviewerIds);
+      if (profs) {
+        nameMap = Object.fromEntries(profs.map((p) => [p.id, p.full_name]));
+      }
+    }
+
+    setMyReviews(
+      plainData.map((r) => ({
+        ...r,
+        reviewer: { full_name: nameMap[r.reviewer_id] || 'Member' }
+      }))
+    );
   };
 
   const loadMessages = async (proposalId) => {
@@ -1476,6 +1562,23 @@ export default function App() {
             )}
           </div>
         </div>
+        {!isOnline && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="bg-amber-100 border-t border-amber-300 text-amber-950"
+          >
+            <div className="max-w-5xl mx-auto px-4 py-2 flex items-center justify-between gap-3 text-xs sm:text-sm font-bold">
+              <div className="flex items-center gap-2">
+                <WifiOff className="w-4 h-4 text-amber-800 shrink-0" />
+                <span>You're offline — viewing cached BarterBox data. Reconnect to post, message, or update trades.</span>
+              </div>
+              <span className="shrink-0 px-2 py-0.5 rounded-full bg-amber-200/90 text-amber-950 text-[11px] font-extrabold uppercase">
+                Offline
+              </span>
+            </div>
+          </div>
+        )}
       </header>
 
       <main className="max-w-5xl mx-auto px-4 pt-4">
