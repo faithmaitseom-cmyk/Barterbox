@@ -107,13 +107,13 @@ const TRADE_FILTERS = {
   closed: { label: 'Closed', statuses: ['rejected', 'withdrawn'] }
 };
 
-const INPUT = 'w-full mt-1.5 px-4 py-3 bg-white border-2 border-slate-300 rounded-2xl text-base text-slate-900 font-medium shadow-[0_3px_0_#cbd5e1] focus:outline-none focus:border-[#1d5fa7] focus:shadow-[0_3px_0_#1d5fa7] transition';
+const INPUT = 'w-full mt-1.5 px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-base text-slate-900 font-medium shadow-xs focus:outline-none focus:ring-2 focus:ring-[#1d5fa7]/30 focus:border-[#1d5fa7] transition';
 const LABEL = 'text-sm font-bold text-slate-800 block';
-const PRIMARY = 'bg-gradient-to-b from-[#367ec7] to-[#1d5fa7] hover:from-[#3d88d4] hover:to-[#226ab5] text-white font-extrabold rounded-2xl text-sm sm:text-base shadow-[0_5px_0_#123c6b] hover:shadow-[0_6px_0_#123c6b] active:translate-y-1 active:shadow-[0_1px_0_#123c6b] transition-all';
-const SECONDARY_3D = 'bg-white hover:bg-slate-50 text-slate-900 font-bold rounded-2xl text-sm border-2 border-slate-200 shadow-[0_4px_0_#cbd5e1] active:translate-y-1 active:shadow-[0_1px_0_#cbd5e1] transition-all';
-const BACK_BTN = 'text-sm font-bold text-[#1d5fa7] bg-sky-100 hover:bg-sky-200 border border-sky-300 px-3.5 py-2 rounded-2xl shadow-[0_3px_0_#7dd3fc] active:translate-y-0.5 flex items-center gap-1.5 transition-all';
-const CARD = 'bg-white border-2 border-slate-200/90 rounded-3xl shadow-[0_8px_0_#e2e8f0]';
-const SM = 'text-sm font-bold px-4 py-2.5 rounded-2xl flex items-center gap-1.5 shadow-[0_4px_0_rgba(15,23,42,0.18)] active:translate-y-0.5 transition-all';
+const PRIMARY = 'bg-gradient-to-b from-[#2f78c4] to-[#1d5fa7] hover:from-[#2b70b8] hover:to-[#185291] text-white font-bold rounded-xl text-sm sm:text-base shadow-sm hover:shadow active:scale-[0.99] transition-all';
+const SECONDARY_3D = 'bg-white hover:bg-slate-50 text-slate-900 font-bold rounded-xl text-sm border border-slate-300 shadow-xs active:scale-[0.99] transition-all';
+const BACK_BTN = 'text-sm font-bold text-[#1d5fa7] bg-sky-50 hover:bg-sky-100 border border-sky-200 px-3 py-1.5 rounded-xl shadow-xs flex items-center gap-1.5 transition-all';
+const CARD = 'bg-white border border-slate-200/90 rounded-2xl shadow-sm hover:shadow-md transition-shadow';
+const SM = 'text-sm font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-xs active:scale-[0.99] transition-all';
 
 const ago = (d) => {
   const s = (Date.now() - new Date(d)) / 1000;
@@ -146,8 +146,8 @@ function SupportEmailLink({ email = SUPPORT_EMAIL, subject = '' }) {
 
 function Modal({ onClose, children, className = 'max-w-lg' }) {
   return (
-    <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-[2px] z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className={`bg-white border-2 border-slate-200 rounded-3xl w-full shadow-[0_14px_0_#0f172a] ${className}`} onClick={(e) => e.stopPropagation()}>{children}</div>
+    <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-[1px] z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className={`bg-white border border-slate-200 rounded-2xl w-full shadow-xl ${className}`} onClick={(e) => e.stopPropagation()}>{children}</div>
     </div>
   );
 }
@@ -156,8 +156,8 @@ function Stars({ value, onChange }) {
   return (
     <div className="flex gap-1.5">
       {[1, 2, 3, 4, 5].map((n) => (
-        <button key={n} type="button" onClick={() => onChange(n)} aria-label={`${n} stars`} className="active:scale-90 transition">
-          <Star className={`w-8 h-8 ${n <= value ? 'fill-amber-400 text-amber-500 drop-shadow-[0_2px_0_#d97706]' : 'text-slate-300'}`} />
+        <button key={n} type="button" onClick={() => onChange(n)} aria-label={`${n} stars`} className="active:scale-95 transition">
+          <Star className={`w-7 h-7 ${n <= value ? 'fill-amber-400 text-amber-500' : 'text-slate-300'}`} />
         </button>
       ))}
     </div>
@@ -167,9 +167,9 @@ function Stars({ value, onChange }) {
 function TermsOfServiceModal({ onClose, onAccept }) {
   return (
     <Modal onClose={onClose} className="max-w-2xl max-h-[88vh] flex flex-col overflow-hidden">
-      <div className="p-4 sm:p-5 border-b-2 border-slate-200 flex items-center justify-between bg-gradient-to-r from-sky-50 to-amber-50">
+      <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
         <div className="flex items-center gap-2.5">
-          <Scale className="w-6 h-6 text-[#1d5fa7]" />
+          <Scale className="w-5 h-5 text-[#1d5fa7]" />
           <div>
             <h2 className="font-extrabold text-lg sm:text-xl text-slate-950">BarterBox Terms of Service</h2>
             <p className="text-xs font-semibold text-slate-600">
@@ -177,7 +177,7 @@ function TermsOfServiceModal({ onClose, onAccept }) {
             </p>
           </div>
         </div>
-        <button type="button" onClick={onClose} className="p-2 rounded-2xl bg-white border border-slate-200 hover:bg-slate-100">
+        <button type="button" onClick={onClose} className="p-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-100">
           <X className="w-5 h-5 text-slate-700" />
         </button>
       </div>
@@ -423,12 +423,12 @@ function TermsOfServiceModal({ onClose, onAccept }) {
         </section>
       </div>
 
-      <div className="p-4 border-t-2 border-slate-200 bg-slate-50 flex gap-2.5">
-        <button type="button" onClick={onClose} className={`flex-1 ${SECONDARY_3D} py-3`}>
+      <div className="p-4 border-t border-slate-200 bg-slate-50 flex gap-2.5">
+        <button type="button" onClick={onClose} className={`flex-1 ${SECONDARY_3D} py-2.5`}>
           Close
         </button>
         {onAccept && (
-          <button type="button" onClick={onAccept} className={`flex-1 ${PRIMARY} py-3`}>
+          <button type="button" onClick={onAccept} className={`flex-1 ${PRIMARY} py-2.5`}>
             I Agree & Close
           </button>
         )}
@@ -440,9 +440,9 @@ function TermsOfServiceModal({ onClose, onAccept }) {
 function PrivacyPolicyModal({ onClose, onAccept }) {
   return (
     <Modal onClose={onClose} className="max-w-2xl max-h-[88vh] flex flex-col overflow-hidden">
-      <div className="p-4 sm:p-5 border-b-2 border-slate-200 flex items-center justify-between bg-gradient-to-r from-sky-50 to-amber-50">
+      <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
         <div className="flex items-center gap-2.5">
-          <FileText className="w-6 h-6 text-[#1d5fa7]" />
+          <FileText className="w-5 h-5 text-[#1d5fa7]" />
           <div>
             <h2 className="font-extrabold text-lg sm:text-xl text-slate-950">BarterBox Privacy Policy</h2>
             <p className="text-xs font-semibold text-slate-600">
@@ -450,7 +450,7 @@ function PrivacyPolicyModal({ onClose, onAccept }) {
             </p>
           </div>
         </div>
-        <button type="button" onClick={onClose} className="p-2 rounded-2xl bg-white border border-slate-200 hover:bg-slate-100">
+        <button type="button" onClick={onClose} className="p-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-100">
           <X className="w-5 h-5 text-slate-700" />
         </button>
       </div>
@@ -488,14 +488,14 @@ function PrivacyPolicyModal({ onClose, onAccept }) {
           <ul className="list-disc pl-5 space-y-1">
             <li>Other users may mention you in messages or reviews, and we may receive reports about you or your listings.</li>
           </ul>
-          <p className="bg-amber-100 border-2 border-amber-300 text-amber-950 p-3 rounded-2xl font-medium">
+          <p className="bg-amber-50 border border-amber-200 text-amber-950 p-3 rounded-xl font-medium">
             Please do not post sensitive information (such as ID numbers, bank details or health information) in listings, photos or messages. Photos you upload may contain hidden location data, so consider removing it before uploading.
           </p>
         </section>
 
         <section className="space-y-1.5">
           <h3 className="font-extrabold text-base text-slate-950">3. How we use your information and why</h3>
-          <div className="border-2 border-slate-200 rounded-2xl overflow-hidden">
+          <div className="border border-slate-200 rounded-xl overflow-hidden">
             <table className="w-full text-left border-collapse">
               <thead className="bg-slate-100 text-slate-950 font-bold">
                 <tr>
@@ -641,12 +641,12 @@ function PrivacyPolicyModal({ onClose, onAccept }) {
         </section>
       </div>
 
-      <div className="p-4 border-t-2 border-slate-200 bg-slate-50 flex gap-2.5">
-        <button type="button" onClick={onClose} className={`flex-1 ${SECONDARY_3D} py-3`}>
+      <div className="p-4 border-t border-slate-200 bg-slate-50 flex gap-2.5">
+        <button type="button" onClick={onClose} className={`flex-1 ${SECONDARY_3D} py-2.5`}>
           Close
         </button>
         {onAccept && (
-          <button type="button" onClick={onAccept} className={`flex-1 ${PRIMARY} py-3`}>
+          <button type="button" onClick={onAccept} className={`flex-1 ${PRIMARY} py-2.5`}>
             I Agree & Close
           </button>
         )}
@@ -1359,9 +1359,9 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-100/70 via-slate-100 to-amber-50/60 text-slate-950 pb-28 text-base">
-      <header className="bg-white/95 backdrop-blur border-b-2 border-slate-200 sticky top-0 z-30 shadow-sm">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+    <div className="min-h-screen bg-gradient-to-b from-sky-50/80 via-slate-100 to-amber-50/40 text-slate-950 pb-24 text-base">
+      <header className="bg-white/95 backdrop-blur border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+        <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
             {activeTab !== 'explore' && (
               <button onClick={() => setActiveTab('explore')} className={BACK_BTN} title="Back to Dashboard">
@@ -1372,7 +1372,7 @@ export default function App() {
               src="/icon-192.png"
               alt="BarterBox logo"
               onClick={() => setActiveTab('explore')}
-              className="w-11 h-11 rounded-2xl border-2 border-sky-200 shadow-[0_4px_0_#bae6fd] object-cover cursor-pointer shrink-0"
+              className="w-10 h-10 rounded-xl border border-sky-200 shadow-xs object-cover cursor-pointer shrink-0"
             />
             <div className="truncate">
               <span onClick={() => setActiveTab('explore')} className="font-black text-xl tracking-tight text-slate-950 cursor-pointer block leading-none">
@@ -1386,56 +1386,56 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleInstallClick}
-                className="text-xs sm:text-sm font-extrabold text-[#1d5fa7] bg-amber-200 hover:bg-amber-300 border-2 border-amber-400 px-3.5 py-2 rounded-2xl shadow-[0_3px_0_#d97706] active:translate-y-0.5 transition-all"
+                className="text-xs sm:text-sm font-bold text-[#1d5fa7] bg-amber-100 hover:bg-amber-200 border border-amber-300 px-3 py-1.5 rounded-xl shadow-xs transition-all"
               >
                 Install App
               </button>
             )}
             {uid && (
-              <button onClick={() => setActiveTab('notifications')} className="relative p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 shadow-[0_3px_0_#cbd5e1] text-slate-800 active:translate-y-0.5" title="Notifications">
+              <button onClick={() => setActiveTab('notifications')} className="relative p-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800" title="Notifications">
                 <Bell className="w-5 h-5" />
-                {unread > 0 && <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 rounded-full bg-rose-600 text-white text-xs font-black flex items-center justify-center shadow">{unread > 9 ? '9+' : unread}</span>}
+                {unread > 0 && <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[11px] font-bold flex items-center justify-center">{unread > 9 ? '9+' : unread}</span>}
               </button>
             )}
             {uid ? (
-              <button onClick={openCreate} className={`${PRIMARY} px-4 py-2.5 flex items-center gap-1.5`}>
-                <Plus className="w-4 h-4 stroke-[2.75]" /><span>Post Item</span>
+              <button onClick={openCreate} className={`${PRIMARY} px-3.5 py-2 flex items-center gap-1.5`}>
+                <Plus className="w-4 h-4 stroke-[2.5]" /><span>Post Item</span>
               </button>
             ) : (
-              <button onClick={() => setActiveTab('profile')} className="bg-gradient-to-b from-slate-800 to-slate-950 hover:from-slate-700 hover:to-slate-900 text-white text-sm font-extrabold px-4 py-2.5 rounded-2xl shadow-[0_4px_0_#020617] active:translate-y-0.5 transition-all">Sign In</button>
+              <button onClick={() => setActiveTab('profile')} className="bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold px-3.5 py-2 rounded-xl shadow-xs transition-all">Sign In</button>
             )}
           </div>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 pt-5">
+      <main className="max-w-5xl mx-auto px-4 pt-4">
         {(activeTab === 'explore' || activeTab === 'wishlist') && (
-          <div className="space-y-5">
+          <div className="space-y-4">
             {activeTab === 'explore' && (
-              <section className="relative overflow-hidden bg-gradient-to-br from-[#1d5fa7] via-[#256fc0] to-[#0f3d73] text-white rounded-3xl p-6 sm:p-7 border-2 border-sky-300/60 shadow-[0_10px_0_#0b294d]">
-                <div className="relative z-10 flex flex-col items-center text-center space-y-2.5">
-                  <div className="p-1.5 bg-white rounded-3xl shadow-[0_6px_0_#0b294d] border-2 border-amber-300">
+              <section className="relative overflow-hidden bg-gradient-to-br from-[#1d5fa7] via-[#246ab8] to-[#154880] text-white rounded-2xl p-5 sm:p-6 border border-sky-300/50 shadow-md">
+                <div className="relative z-10 flex flex-col items-center text-center space-y-2">
+                  <div className="p-1 bg-white rounded-2xl shadow-sm border border-amber-200">
                     <img
                       src="/icon-192.png"
                       alt="BarterBox Emblem"
-                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover"
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover"
                     />
                   </div>
-                  <h1 className="text-3xl sm:text-4xl font-black tracking-tight drop-shadow-[0_3px_0_rgba(11,41,77,0.85)]">
+                  <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
                     Barter<span className="text-amber-300">Box</span>
                   </h1>
-                  <p className="text-sm sm:text-base font-semibold text-sky-100 max-w-md">
-                    Botswana's vibrant peer-to-peer barter hub — trade everyday goods & local skills with zero fees.
+                  <p className="text-sm sm:text-base font-medium text-sky-100 max-w-md">
+                    Botswana's peer-to-peer barter hub — trade everyday goods & local skills with zero fees.
                   </p>
                   <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
-                    <span className="inline-flex items-center gap-1.5 bg-amber-300 text-slate-950 font-extrabold text-xs sm:text-sm px-3.5 py-1.5 rounded-full shadow-[0_3px_0_#b45309]">
-                      <Sparkles className="w-4 h-4" /> Gaborone & Nationwide BW
+                    <span className="inline-flex items-center gap-1.5 bg-amber-200 text-slate-950 font-bold text-xs sm:text-sm px-3 py-1 rounded-full">
+                      <Sparkles className="w-3.5 h-3.5" /> Gaborone & Nationwide BW
                     </span>
                     {!uid && (
                       <button
                         type="button"
                         onClick={() => setActiveTab('profile')}
-                        className="bg-white hover:bg-sky-50 text-[#1d5fa7] font-extrabold text-xs sm:text-sm px-4 py-1.5 rounded-full shadow-[0_3px_0_#0b294d] active:translate-y-0.5 transition"
+                        className="bg-white hover:bg-sky-50 text-[#1d5fa7] font-bold text-xs sm:text-sm px-3.5 py-1 rounded-full shadow-xs transition"
                       >
                         Start Trading Free →
                       </button>
@@ -1446,25 +1446,25 @@ export default function App() {
             )}
 
             <div className={`${CARD} p-4 space-y-3`}>
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex flex-col sm:flex-row gap-2.5">
                 <div className="relative flex-1">
-                  <Search className="w-5 h-5 text-[#1d5fa7] absolute left-3.5 top-3.5" />
+                  <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
                   <input
                     type="text"
                     placeholder="Search seswaa, phones, plumbing, furniture..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-2xl text-base font-medium text-slate-900 shadow-[inset_0_2px_4px_rgba(15,23,42,0.06)] focus:outline-none focus:border-[#1d5fa7] focus:bg-white transition"
+                    className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#1d5fa7]/25 focus:border-[#1d5fa7] focus:bg-white transition"
                   />
                 </div>
-                <div className="flex flex-wrap sm:flex-nowrap gap-2.5">
+                <div className="flex flex-wrap sm:flex-nowrap gap-2">
                   <div className="relative flex-1 sm:flex-initial">
-                    <MapPin className="w-4 h-4 text-rose-600 absolute left-3 top-3.5 pointer-events-none" />
-                    <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} className="w-full pl-9 pr-8 py-3 bg-sky-50 border-2 border-sky-200 rounded-2xl text-sm font-bold text-slate-900 shadow-[0_3px_0_#bae6fd] focus:outline-none focus:border-[#1d5fa7]">
+                    <MapPin className="w-4 h-4 text-rose-600 absolute left-3 top-3 pointer-events-none" />
+                    <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} className="w-full pl-8 pr-7 py-2.5 bg-sky-50/80 border border-sky-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:border-[#1d5fa7]">
                       {BW_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
-                  <select value={listingTypeFilter} onChange={(e) => setListingTypeFilter(e.target.value)} className="flex-1 sm:flex-initial px-3.5 py-3 bg-amber-50 border-2 border-amber-200 rounded-2xl text-sm font-bold text-slate-900 shadow-[0_3px_0_#fde68a] focus:outline-none focus:border-[#1d5fa7]">
+                  <select value={listingTypeFilter} onChange={(e) => setListingTypeFilter(e.target.value)} className="flex-1 sm:flex-initial px-3 py-2.5 bg-amber-50/80 border border-amber-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:border-[#1d5fa7]">
                     <option value="all">Goods & Services</option>
                     <option value="good">Goods Only</option>
                     <option value="service">Services Only</option>
@@ -1472,15 +1472,15 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="flex gap-2 overflow-x-auto pb-1 pt-1">
+              <div className="flex gap-2 overflow-x-auto pb-1">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
-                    className={`px-4 py-2 rounded-2xl text-sm font-bold whitespace-nowrap transition-all ${
+                    className={`px-3.5 py-1.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${
                       selectedCategory === cat
-                        ? 'bg-gradient-to-b from-[#367ec7] to-[#1d5fa7] text-white shadow-[0_4px_0_#123c6b] -translate-y-0.5'
-                        : 'bg-slate-100 text-slate-800 border border-slate-200 hover:bg-slate-200 shadow-[0_3px_0_#cbd5e1]'
+                        ? 'bg-[#1d5fa7] text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-800 border border-slate-200 hover:bg-slate-200'
                     }`}
                   >
                     {cat}
@@ -1490,53 +1490,53 @@ export default function App() {
             </div>
 
             <div className="flex items-center justify-between pt-1">
-              <h2 className="font-black text-xl text-slate-950">{activeTab === 'wishlist' ? 'Saved Wishlist Items' : 'Available for Barter'}</h2>
+              <h2 className="font-extrabold text-xl text-slate-950">{activeTab === 'wishlist' ? 'Saved Wishlist Items' : 'Available for Barter'}</h2>
               <button onClick={fetchListings} className={BACK_BTN}><RefreshCw className="w-4 h-4" /> Refresh</button>
             </div>
 
-            {loadError && <div className="bg-rose-100 border-2 border-rose-300 text-rose-950 p-4 rounded-2xl text-sm font-semibold shadow-[0_4px_0_#fda4af]"><strong>Notice:</strong> {loadError}</div>}
+            {loadError && <div className="bg-rose-50 border border-rose-200 text-rose-900 p-3.5 rounded-xl text-sm font-medium"><strong>Notice:</strong> {loadError}</div>}
 
             {loadingData && listings.length === 0 ? (
-              <div className={`${CARD} p-12 text-center text-base font-bold text-slate-600`}>Loading Botswana marketplace...</div>
+              <div className={`${CARD} p-10 text-center text-base font-semibold text-slate-600`}>Loading Botswana marketplace...</div>
             ) : filteredListings.length === 0 ? (
               <div className={`${CARD} p-10 text-center space-y-2`}>
-                <Package className="w-10 h-10 text-[#1d5fa7] mx-auto" />
+                <Package className="w-9 h-9 text-[#1d5fa7] mx-auto" />
                 <p className="font-extrabold text-lg text-slate-900">No listings match your filter</p>
                 <p className="text-sm text-slate-600">Try clearing filters or post an item to start trading!</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredListings.map((item) => {
                   const isFav = favorites.includes(item.id);
                   return (
-                    <div key={item.id} onClick={() => setSelectedListing(item)} className={`${CARD} overflow-hidden hover:-translate-y-1 hover:shadow-[0_12px_0_#cbd5e1] transition-all cursor-pointer flex flex-col`}>
-                      <div className="relative h-48 bg-slate-200 border-b-2 border-slate-100">
+                    <div key={item.id} onClick={() => setSelectedListing(item)} className={`${CARD} overflow-hidden hover:-translate-y-0.5 transition-all cursor-pointer flex flex-col`}>
+                      <div className="relative h-44 bg-slate-200 border-b border-slate-100">
                         <img src={item.image_url || FALLBACK_IMG} alt={item.title} className="w-full h-full object-cover" />
-                        <span className={`absolute top-3 left-3 text-xs font-extrabold px-3 py-1.5 rounded-2xl flex items-center gap-1.5 shadow-[0_3px_0_rgba(15,23,42,0.35)] ${
+                        <span className={`absolute top-2.5 left-2.5 text-xs font-extrabold px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-xs ${
                           item.type === 'service'
-                            ? 'bg-amber-300 text-slate-950 border border-amber-500'
-                            : 'bg-sky-600 text-white border border-sky-800'
+                            ? 'bg-amber-200 text-slate-950 border border-amber-300'
+                            : 'bg-sky-600 text-white'
                         }`}>
                           {item.type === 'service' ? <Briefcase className="w-3.5 h-3.5" /> : <Package className="w-3.5 h-3.5" />}
                           {item.type === 'service' ? 'Service' : 'Good'}
                         </span>
-                        <button onClick={(e) => toggleFavorite(e, item.id)} className="absolute top-3 right-3 w-10 h-10 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center shadow-[0_3px_0_#cbd5e1] active:translate-y-0.5 transition" title="Save to wishlist">
-                          <Heart className={`w-5 h-5 ${isFav ? 'fill-rose-600 text-rose-600' : 'text-slate-700'}`} />
+                        <button onClick={(e) => toggleFavorite(e, item.id)} className="absolute top-2.5 right-2.5 w-9 h-9 rounded-full bg-white/95 border border-slate-200 flex items-center justify-center shadow-xs hover:bg-white transition" title="Save to wishlist">
+                          <Heart className={`w-4 h-4 ${isFav ? 'fill-rose-600 text-rose-600' : 'text-slate-700'}`} />
                         </button>
                       </div>
-                      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
+                      <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                         <div>
-                          <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-600 mb-1.5">
-                            <MapPin className="w-4 h-4 text-rose-600 shrink-0" />
+                          <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-600 mb-1">
+                            <MapPin className="w-3.5 h-3.5 text-rose-600 shrink-0" />
                             <span>{item.city}</span>
                             <span>•</span>
                             <span className="text-[#1d5fa7] truncate">{item.category}</span>
                           </div>
                           <h3 className="font-extrabold text-lg text-slate-950 line-clamp-1">{item.title}</h3>
-                          <p className="text-sm text-slate-700 line-clamp-2 mt-1.5 leading-snug">{item.description}</p>
+                          <p className="text-sm text-slate-700 line-clamp-2 mt-1 leading-snug">{item.description}</p>
                         </div>
-                        <div className="bg-gradient-to-r from-sky-100 to-amber-100/80 border-2 border-sky-200 rounded-2xl p-3 shadow-[inset_0_1px_0_#ffffff]">
-                          <span className="text-xs uppercase tracking-wider font-black text-[#1d5fa7] block">Looking For:</span>
+                        <div className="bg-sky-50/90 border border-sky-200/80 rounded-xl p-2.5">
+                          <span className="text-[11px] uppercase tracking-wider font-extrabold text-[#1d5fa7] block">Looking For:</span>
                           <p className="text-sm font-bold text-slate-900 line-clamp-1 mt-0.5">{item.looking_for || 'Open to fair barter offers'}</p>
                         </div>
                       </div>
@@ -1550,17 +1550,17 @@ export default function App() {
 
         {activeTab === 'trades' && (
           <div className="space-y-4 max-w-2xl mx-auto">
-            <h2 className="font-black text-2xl text-slate-950">Your Barter Proposals & History</h2>
+            <h2 className="font-extrabold text-2xl text-slate-950">Your Barter Proposals & History</h2>
             {!uid ? (
               <div className={`${CARD} p-8 text-center space-y-3`}>
                 <p className="text-base font-medium text-slate-700">Sign in to view your incoming and outgoing barter offers.</p>
-                <button onClick={() => setActiveTab('profile')} className={`${PRIMARY} px-6 py-3`}>Go to Sign In</button>
+                <button onClick={() => setActiveTab('profile')} className={`${PRIMARY} px-6 py-2.5`}>Go to Sign In</button>
               </div>
             ) : (
               <>
-                <div className="flex gap-2.5 flex-wrap">
+                <div className="flex gap-2 flex-wrap">
                   {Object.entries(TRADE_FILTERS).map(([key, f]) => (
-                    <button key={key} onClick={() => setTradeFilter(key)} className={`px-4 py-2 rounded-2xl text-sm font-extrabold transition ${tradeFilter === key ? 'bg-[#1d5fa7] text-white shadow-[0_4px_0_#123c6b]' : 'bg-white text-slate-800 border-2 border-slate-200 shadow-[0_3px_0_#cbd5e1]'}`}>{f.label}</button>
+                    <button key={key} onClick={() => setTradeFilter(key)} className={`px-4 py-1.5 rounded-xl text-sm font-bold transition ${tradeFilter === key ? 'bg-[#1d5fa7] text-white shadow-xs' : 'bg-white text-slate-800 border border-slate-200 hover:bg-slate-50'}`}>{f.label}</button>
                   ))}
                 </div>
                 {visibleTrades.length === 0 ? (
@@ -1581,32 +1581,32 @@ export default function App() {
                   const allSafetyChecked = checkedCount === SAFETY_CHECKLIST.length;
 
                   return (
-                    <div key={p.id} className={`${CARD} p-5 space-y-3.5`}>
+                    <div key={p.id} className={`${CARD} p-4 sm:p-5 space-y-3.5`}>
                       <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <span className={`text-xs sm:text-sm font-extrabold px-3 py-1 rounded-2xl ${amSender ? 'bg-sky-100 text-sky-950 border border-sky-300' : 'bg-amber-100 text-amber-950 border border-amber-300'}`}>
+                        <span className={`text-xs sm:text-sm font-bold px-2.5 py-1 rounded-lg ${amSender ? 'bg-sky-100 text-sky-950 border border-sky-200' : 'bg-amber-100 text-amber-950 border border-amber-200'}`}>
                           {amSender ? `Sent to ${other?.full_name || 'Member'}` : `Offer from ${other?.full_name || 'Member'}`}
                         </span>
-                        <span className={`text-xs font-black uppercase px-3 py-1 rounded-2xl ${STATUS_STYLE[p.status]}`}>{p.status}</span>
+                        <span className={`text-xs font-extrabold uppercase px-2.5 py-1 rounded-lg ${STATUS_STYLE[p.status]}`}>{p.status}</span>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 border border-slate-200 p-3.5 rounded-2xl text-sm">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 border border-slate-200 p-3 rounded-xl text-sm">
                         <div><span className="text-xs font-bold uppercase text-slate-500 block">Target Item:</span><strong className="text-slate-950 text-base">{p.target_listing?.title}</strong></div>
                         <div><span className="text-xs font-bold uppercase text-slate-500 block">Offered in Exchange:</span><strong className="text-[#1d5fa7] text-base">{p.offered_listing?.title || p.custom_offer}</strong></div>
                       </div>
                       {p.status === 'countered' && p.counter_text && (
-                        <div className="bg-amber-100/80 border-2 border-amber-300 rounded-2xl p-3.5 text-sm">
-                          <span className="font-extrabold text-amber-950 block">Counter-offer from {p.receiver?.full_name || 'owner'}:</span>
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm">
+                          <span className="font-bold text-amber-950 block">Counter-offer from {p.receiver?.full_name || 'owner'}:</span>
                           <p className="text-slate-900 font-medium mt-0.5">{p.counter_text}</p>
                         </div>
                       )}
 
                       {['pending', 'countered', 'accepted'].includes(p.status) && (
-                        <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-3.5 space-y-2.5">
+                        <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-3.5 space-y-2.5">
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-sm font-extrabold text-amber-950 flex items-center gap-1.5">
-                              <ShieldCheck className="w-5 h-5 text-[#1d5fa7] shrink-0" />
+                              <ShieldCheck className="w-4 h-4 text-[#1d5fa7] shrink-0" />
                               Safety Tips Before Finalizing Trade Meet
                             </span>
-                            <span className={`text-xs font-extrabold px-2.5 py-1 rounded-full ${allSafetyChecked ? 'bg-emerald-200 text-emerald-950' : 'bg-amber-200 text-amber-950'}`}>
+                            <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${allSafetyChecked ? 'bg-emerald-200 text-emerald-950' : 'bg-amber-200 text-amber-950'}`}>
                               {checkedCount}/{SAFETY_CHECKLIST.length} ticked
                             </span>
                           </div>
@@ -1627,7 +1627,7 @@ export default function App() {
                             })}
                           </div>
                           {allSafetyChecked && (
-                            <p className="text-xs font-extrabold text-emerald-800">
+                            <p className="text-xs font-bold text-emerald-800">
                               ✓ All safety checks ticked — you're ready to finalize your meetup details.
                             </p>
                           )}
@@ -1635,8 +1635,8 @@ export default function App() {
                       )}
 
                       {p.status === 'accepted' && (
-                        <div className="bg-sky-100/80 border-2 border-sky-300 rounded-2xl p-3.5 text-sm space-y-2">
-                          <p className="font-extrabold text-[#1d5fa7]">Both of you must confirm once the exchange has happened.</p>
+                        <div className="bg-sky-50 border border-sky-200 rounded-xl p-3.5 text-sm space-y-2">
+                          <p className="font-bold text-[#1d5fa7]">Both of you must confirm once the exchange has happened.</p>
                           <div className="flex flex-wrap items-center gap-3 font-bold">
                             <span className={myDone ? 'text-emerald-800' : 'text-slate-700'}>{myDone ? '✓ You confirmed' : 'You: not yet'}</span>
                             <span className={theirDone ? 'text-emerald-800' : 'text-slate-700'}>{theirDone ? `✓ ${other?.full_name || 'They'} confirmed` : `${other?.full_name || 'They'}: not yet`}</span>
@@ -1667,7 +1667,7 @@ export default function App() {
                           {p.status === 'completed' && !reviewed && (
                             <button onClick={() => { setReviewFor(p); setReviewRating(5); setReviewComment(''); }} className={`${SM} bg-amber-400 text-slate-950`}><Star className="w-4 h-4" /> Leave a review</button>
                           )}
-                          {p.status === 'completed' && reviewed && <span className="text-sm text-emerald-800 font-extrabold self-center">✓ Review submitted</span>}
+                          {p.status === 'completed' && reviewed && <span className="text-sm text-emerald-800 font-bold self-center">✓ Review submitted</span>}
                         </div>
                       </div>
                     </div>
@@ -1681,13 +1681,13 @@ export default function App() {
         {activeTab === 'notifications' && (
           <div className="space-y-3 max-w-2xl mx-auto">
             <div className="flex items-center justify-between">
-              <h2 className="font-black text-2xl text-slate-950">Notifications</h2>
+              <h2 className="font-extrabold text-2xl text-slate-950">Notifications</h2>
               {unread > 0 && <button onClick={markAllRead} className={BACK_BTN}><Check className="w-4 h-4" /> Mark all as read</button>}
             </div>
             {notifications.length === 0 ? (
               <div className={`${CARD} p-8 text-center text-base font-medium text-slate-600`}>You're all caught up. New offers, messages and trade updates will show here.</div>
             ) : notifications.map((n) => (
-              <button key={n.id} onClick={() => markRead(n)} className={`${CARD} w-full text-left p-4 flex items-start gap-3 hover:bg-slate-50 ${n.read ? '' : 'border-sky-400 bg-sky-50/70'}`}>
+              <button key={n.id} onClick={() => markRead(n)} className={`${CARD} w-full text-left p-4 flex items-start gap-3 hover:bg-slate-50 ${n.read ? '' : 'border-sky-300 bg-sky-50/60'}`}>
                 <span className={`mt-2 w-2.5 h-2.5 rounded-full shrink-0 ${n.read ? 'bg-slate-300' : 'bg-[#1d5fa7]'}`} />
                 <span className="flex-1">
                   <span className="text-base font-semibold text-slate-900 block">{n.body}</span>
@@ -1704,7 +1704,7 @@ export default function App() {
             {isPasswordRecovery && uid ? (
               <div className={`${CARD} p-6 space-y-4`}>
                 <div className="text-center">
-                  <h2 className="font-black text-2xl text-slate-950">Set a New Password</h2>
+                  <h2 className="font-extrabold text-2xl text-slate-950">Set a New Password</h2>
                   <p className="text-sm text-slate-600 mt-1">Enter and confirm your new BarterBox password below.</p>
                 </div>
                 <form onSubmit={handleUpdatePassword} className="space-y-3.5">
@@ -1733,7 +1733,7 @@ export default function App() {
                     />
                   </div>
                   {recoveryFeedback && (
-                    <p className="text-sm font-bold text-[#1d5fa7] bg-sky-100 border border-sky-300 p-3 rounded-2xl">{recoveryFeedback}</p>
+                    <p className="text-sm font-bold text-[#1d5fa7] bg-sky-50 border border-sky-200 p-3 rounded-xl">{recoveryFeedback}</p>
                   )}
                   <button type="submit" disabled={updatingPassword} className={`w-full ${PRIMARY} py-3 disabled:opacity-50`}>
                     {updatingPassword ? 'Updating Password...' : 'Save New Password'}
@@ -1745,7 +1745,7 @@ export default function App() {
                 {authMode === 'login' && resetMode ? (
                   <>
                     <div className="text-center">
-                      <h2 className="font-black text-2xl text-slate-950">Reset Your Password</h2>
+                      <h2 className="font-extrabold text-2xl text-slate-950">Reset Your Password</h2>
                       <p className="text-sm text-slate-600 mt-1">We'll email you a recovery link to set a new password.</p>
                     </div>
                     <form onSubmit={handleSendResetEmail} className="space-y-3.5">
@@ -1761,7 +1761,7 @@ export default function App() {
                         />
                       </div>
                       {resetFeedback && (
-                        <p className="text-sm font-bold text-[#1d5fa7] bg-sky-100 border border-sky-300 p-3 rounded-2xl">{resetFeedback}</p>
+                        <p className="text-sm font-bold text-[#1d5fa7] bg-sky-50 border border-sky-200 p-3 rounded-xl">{resetFeedback}</p>
                       )}
                       <button type="submit" disabled={sendingReset} className={`w-full ${PRIMARY} py-3 disabled:opacity-50`}>
                         {sendingReset ? 'Sending Link...' : 'Send Reset Link'}
@@ -1771,7 +1771,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => { setResetMode(false); setResetFeedback(''); }}
-                        className="text-sm text-[#1d5fa7] font-extrabold hover:underline"
+                        className="text-sm text-[#1d5fa7] font-bold hover:underline"
                       >
                         Back to Sign In
                       </button>
@@ -1780,9 +1780,9 @@ export default function App() {
                 ) : (
                   <>
                     <div className="text-center space-y-1">
-                      <img src="/icon-192.png" alt="BarterBox" className="w-14 h-14 rounded-2xl mx-auto border-2 border-sky-200 shadow-[0_4px_0_#bae6fd]" />
-                      <h2 className="font-black text-2xl text-slate-950 pt-1">{authMode === 'login' ? 'Welcome Back to BarterBox' : 'Join BarterBox Botswana'}</h2>
-                      <p className="text-sm font-semibold text-slate-600">Zero fees. Direct peer-to-peer trading.</p>
+                      <img src="/icon-192.png" alt="BarterBox" className="w-12 h-12 rounded-xl mx-auto border border-sky-200 shadow-xs" />
+                      <h2 className="font-extrabold text-2xl text-slate-950 pt-1">{authMode === 'login' ? 'Welcome Back to BarterBox' : 'Join BarterBox Botswana'}</h2>
+                      <p className="text-sm font-medium text-slate-600">Zero fees. Direct peer-to-peer trading.</p>
                     </div>
                     <form onSubmit={handleAuth} className="space-y-3.5">
                       {authMode === 'signup' && (
@@ -1817,7 +1817,7 @@ export default function App() {
                               setResetFeedback('');
                               setResetMode(true);
                             }}
-                            className="text-sm text-[#1d5fa7] font-extrabold hover:underline"
+                            className="text-sm text-[#1d5fa7] font-bold hover:underline"
                           >
                             Forgot password?
                           </button>
@@ -1825,7 +1825,7 @@ export default function App() {
                       )}
 
                       {authMode === 'signup' && (
-                        <div className="bg-sky-50 border-2 border-sky-200 rounded-2xl p-3.5 space-y-2.5">
+                        <div className="bg-sky-50/80 border border-sky-200 rounded-xl p-3 space-y-2">
                           <label className="flex items-start gap-2.5 text-sm text-slate-800 font-medium cursor-pointer select-none">
                             <input
                               type="checkbox"
@@ -1839,7 +1839,7 @@ export default function App() {
                               <button
                                 type="button"
                                 onClick={() => setLegalModal('terms')}
-                                className="text-[#1d5fa7] font-extrabold underline"
+                                className="text-[#1d5fa7] font-bold underline"
                               >
                                 Terms of Service
                               </button>
@@ -1860,7 +1860,7 @@ export default function App() {
                               <button
                                 type="button"
                                 onClick={() => setLegalModal('privacy')}
-                                className="text-[#1d5fa7] font-extrabold underline"
+                                className="text-[#1d5fa7] font-bold underline"
                               >
                                 Privacy Policy
                               </button>
@@ -1870,16 +1870,16 @@ export default function App() {
                         </div>
                       )}
 
-                      {authMessage && <p className="text-sm font-bold text-[#1d5fa7] bg-sky-100 border border-sky-300 p-3 rounded-2xl">{authMessage}</p>}
+                      {authMessage && <p className="text-sm font-bold text-[#1d5fa7] bg-sky-50 border border-sky-200 p-3 rounded-xl">{authMessage}</p>}
                       <button
                         type="submit"
                         disabled={authLoading || (authMode === 'signup' && (!acceptedTerms || !acceptedPrivacy))}
-                        className={`w-full ${PRIMARY} py-3.5 disabled:opacity-50`}
+                        className={`w-full ${PRIMARY} py-3 disabled:opacity-50`}
                       >
                         {authLoading ? 'Please wait...' : authMode === 'login' ? 'Sign In' : 'Create Free Account'}
                       </button>
                     </form>
-                    <div className="text-center pt-2 space-y-2">
+                    <div className="text-center pt-1.5 space-y-2">
                       <button
                         type="button"
                         onClick={() => {
@@ -1887,11 +1887,11 @@ export default function App() {
                           setAuthMessage('');
                           setResetMode(false);
                         }}
-                        className="text-sm text-[#1d5fa7] font-extrabold hover:underline block mx-auto"
+                        className="text-sm text-[#1d5fa7] font-bold hover:underline block mx-auto"
                       >
                         {authMode === 'login' ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
                       </button>
-                      <div className="flex items-center justify-center gap-3 text-xs font-bold text-slate-600">
+                      <div className="flex items-center justify-center gap-3 text-xs font-semibold text-slate-600">
                         <button
                           type="button"
                           onClick={() => setLegalModal('terms')}
@@ -1919,23 +1919,23 @@ export default function App() {
                     <img
                       src={profile?.avatar_url || '/icon-192.png'}
                       alt={profile?.full_name || 'Profile avatar'}
-                      className="w-16 h-16 rounded-2xl object-cover border-2 border-sky-200 bg-slate-100 shrink-0"
+                      className="w-14 h-14 rounded-xl object-cover border border-sky-200 bg-slate-100 shrink-0"
                     />
                     <div className="min-w-0">
-                      <h2 className="font-black text-xl text-slate-950 truncate">{profile?.full_name || session.user.email}</h2>
+                      <h2 className="font-extrabold text-xl text-slate-950 truncate">{profile?.full_name || session.user.email}</h2>
                       {profile?.username && <p className="text-sm text-[#1d5fa7] font-bold truncate">@{profile.username}</p>}
-                      <p className="text-sm font-semibold text-slate-600 flex items-center gap-1 mt-0.5"><MapPin className="w-4 h-4 text-rose-600" /> {profile?.city || 'Botswana'}</p>
-                      <p className="text-sm font-bold text-slate-700 flex items-center gap-1 mt-1">
+                      <p className="text-sm font-medium text-slate-600 flex items-center gap-1 mt-0.5"><MapPin className="w-4 h-4 text-rose-600" /> {profile?.city || 'Botswana'}</p>
+                      <p className="text-sm font-semibold text-slate-700 flex items-center gap-1 mt-1">
                         <Star className="w-4 h-4 fill-amber-400 text-amber-500" />
                         {profile?.rating_count ? `${Number(profile.rating_avg).toFixed(1)} from ${profile.rating_count} review${profile.rating_count > 1 ? 's' : ''}` : 'No reviews yet'}
                       </p>
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 shrink-0">
-                    <button onClick={() => openSettings('edit')} className={`${SECONDARY_3D} px-3.5 py-2 flex items-center gap-1.5`}>
+                    <button onClick={() => openSettings('edit')} className={`${SECONDARY_3D} px-3 py-1.5 flex items-center gap-1.5`}>
                       <Settings className="w-4 h-4 text-[#1d5fa7]" /> Settings
                     </button>
-                    <button onClick={handleLogout} className="text-sm font-extrabold text-rose-700 bg-rose-100 hover:bg-rose-200 border border-rose-300 px-3.5 py-2 rounded-2xl flex items-center gap-1.5">
+                    <button onClick={handleLogout} className="text-sm font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
                       <LogOut className="w-4 h-4" /> Sign Out
                     </button>
                   </div>
@@ -1950,27 +1950,27 @@ export default function App() {
                       {myListings.map((item) => {
                         const editable = canEditListing(item);
                         return (
-                          <div key={item.id} className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm space-y-2">
+                          <div key={item.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm space-y-2">
                             <div className="flex items-center justify-between gap-2">
                               <div className="min-w-0">
                                 <p className="font-extrabold text-slate-950 truncate">{item.title}</p>
-                                <p className="text-xs font-semibold text-slate-600">{item.city} • {item.category}</p>
+                                <p className="text-xs font-medium text-slate-600">{item.city} • {item.category}</p>
                               </div>
-                              <span className={`px-2.5 py-1 rounded-full text-xs font-extrabold capitalize ${STATUS_STYLE[item.status]}`}>{item.status}</span>
+                              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold capitalize ${STATUS_STYLE[item.status]}`}>{item.status}</span>
                             </div>
                             {item.status !== 'traded' && (
                               <div className="flex flex-wrap items-center gap-2">
                                 {editable ? (
-                                  <button type="button" onClick={() => openEdit(item)} className="px-3 py-1.5 rounded-xl bg-white border border-slate-300 flex items-center gap-1 text-xs font-bold">
+                                  <button type="button" onClick={() => openEdit(item)} className="px-2.5 py-1 rounded-lg bg-white border border-slate-300 flex items-center gap-1 text-xs font-bold">
                                     <Pencil className="w-3.5 h-3.5" /> Edit
                                   </button>
                                 ) : (
                                   <span className="text-xs text-slate-500 italic">Edit window closed (1h limit)</span>
                                 )}
                                 {item.status === 'active'
-                                  ? <button type="button" onClick={() => setListingStatus(item, 'paused')} className="px-3 py-1.5 rounded-xl bg-white border border-slate-300 flex items-center gap-1 text-xs font-bold"><Pause className="w-3.5 h-3.5" /> Pause</button>
-                                  : <button type="button" onClick={() => setListingStatus(item, 'active')} className="px-3 py-1.5 rounded-xl bg-white border border-slate-300 flex items-center gap-1 text-xs font-bold"><Play className="w-3.5 h-3.5" /> Resume</button>}
-                                <button type="button" onClick={() => setListingStatus(item, 'deleted')} className="px-3 py-1.5 rounded-xl bg-rose-100 text-rose-800 flex items-center gap-1 text-xs font-bold"><Trash2 className="w-3.5 h-3.5" /> Delete</button>
+                                  ? <button type="button" onClick={() => setListingStatus(item, 'paused')} className="px-2.5 py-1 rounded-lg bg-white border border-slate-300 flex items-center gap-1 text-xs font-bold"><Pause className="w-3.5 h-3.5" /> Pause</button>
+                                  : <button type="button" onClick={() => setListingStatus(item, 'active')} className="px-2.5 py-1 rounded-lg bg-white border border-slate-300 flex items-center gap-1 text-xs font-bold"><Play className="w-3.5 h-3.5" /> Resume</button>}
+                                <button type="button" onClick={() => setListingStatus(item, 'deleted')} className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1 text-xs font-bold"><Trash2 className="w-3.5 h-3.5" /> Delete</button>
                               </div>
                             )}
                           </div>
@@ -2002,24 +2002,24 @@ export default function App() {
         <Modal onClose={() => setShowInstallModal(false)} className="max-w-md">
           <div className="p-5 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-              <h2 className="font-black text-xl text-slate-950">Install BarterBox on Your Phone</h2>
-              <button type="button" onClick={() => setShowInstallModal(false)} className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200">
+              <h2 className="font-extrabold text-xl text-slate-950">Install BarterBox on Your Phone</h2>
+              <button type="button" onClick={() => setShowInstallModal(false)} className="p-1.5 rounded-lg hover:bg-slate-100">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-3 text-sm text-slate-800">
-              <div className="bg-sky-50 border-2 border-sky-200 rounded-2xl p-3.5 space-y-1">
-                <p className="font-extrabold text-slate-950">Android (Chrome)</p>
+              <div className="bg-sky-50 border border-sky-200 rounded-xl p-3 space-y-1">
+                <p className="font-bold text-slate-950">Android (Chrome)</p>
                 <p>1. Open <strong>https://barterbox-lemon.vercel.app</strong> in Chrome.</p>
                 <p>2. Tap the <strong>three dots (⋮)</strong> → <strong>Install app</strong> or <strong>Add to Home screen</strong>.</p>
               </div>
-              <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-3.5 space-y-1">
-                <p className="font-extrabold text-slate-950">iPhone (Safari)</p>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-1">
+                <p className="font-bold text-slate-950">iPhone (Safari)</p>
                 <p>1. Open <strong>https://barterbox-lemon.vercel.app</strong> in Safari.</p>
                 <p>2. Tap <strong>Share</strong> → <strong>Add to Home Screen</strong> → <strong>Add</strong>.</p>
               </div>
             </div>
-            <button type="button" onClick={() => setShowInstallModal(false)} className={`w-full ${PRIMARY} py-3`}>
+            <button type="button" onClick={() => setShowInstallModal(false)} className={`w-full ${PRIMARY} py-2.5`}>
               Got It
             </button>
           </div>
@@ -2060,12 +2060,12 @@ export default function App() {
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div className="flex items-center gap-2">
                 <Settings className="w-5 h-5 text-[#1d5fa7]" />
-                <h2 className="font-black text-xl text-slate-950">Account & App Settings</h2>
+                <h2 className="font-extrabold text-xl text-slate-950">Account & App Settings</h2>
               </div>
-              <button onClick={() => setShowSettingsModal(false)} className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200"><X className="w-5 h-5" /></button>
+              <button onClick={() => setShowSettingsModal(false)} className="p-1.5 rounded-lg hover:bg-slate-100"><X className="w-5 h-5" /></button>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {[
                 { id: 'edit', label: 'Edit Profile', Icon: User },
                 { id: 'help', label: 'Help & Support', Icon: HelpCircle },
@@ -2078,36 +2078,36 @@ export default function App() {
                   key={id}
                   type="button"
                   onClick={() => { setSettingsSection(id); setSettingsNotice(''); }}
-                  className={`px-3.5 py-2 rounded-2xl text-xs font-extrabold flex items-center gap-1.5 transition ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition ${
                     settingsSection === id
                       ? id === 'delete' ? 'bg-rose-600 text-white' : 'bg-[#1d5fa7] text-white'
                       : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-3.5 h-3.5" />
                   <span>{label}</span>
                 </button>
               ))}
               <button
                 type="button"
                 onClick={() => setLegalModal('terms')}
-                className="px-3.5 py-2 rounded-2xl text-xs font-extrabold flex items-center gap-1.5 bg-slate-100 text-slate-800 hover:bg-slate-200 transition"
+                className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-slate-100 text-slate-800 hover:bg-slate-200 transition"
               >
-                <Scale className="w-4 h-4" />
+                <Scale className="w-3.5 h-3.5" />
                 <span>Terms of Service</span>
               </button>
               <button
                 type="button"
                 onClick={() => setLegalModal('privacy')}
-                className="px-3.5 py-2 rounded-2xl text-xs font-extrabold flex items-center gap-1.5 bg-slate-100 text-slate-800 hover:bg-slate-200 transition"
+                className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-slate-100 text-slate-800 hover:bg-slate-200 transition"
               >
-                <FileText className="w-4 h-4" />
+                <FileText className="w-3.5 h-3.5" />
                 <span>Privacy Policy</span>
               </button>
             </div>
 
             {settingsNotice && (
-              <div className="bg-sky-100 border-2 border-sky-300 text-[#1d5fa7] text-sm font-bold p-3 rounded-2xl">
+              <div className="bg-sky-50 border border-sky-200 text-[#1d5fa7] text-sm font-bold p-3 rounded-xl">
                 {settingsNotice}
               </div>
             )}
@@ -2118,10 +2118,10 @@ export default function App() {
                   <img
                     src={editAvatarUrl || '/icon-192.png'}
                     alt="Preview avatar"
-                    className="w-16 h-16 rounded-2xl object-cover border-2 border-sky-200 bg-slate-100"
+                    className="w-14 h-14 rounded-xl object-cover border border-sky-200 bg-slate-100"
                   />
                   <div className="space-y-1">
-                    <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-extrabold px-3.5 py-2.5 rounded-2xl border border-slate-300 inline-flex items-center gap-1.5">
+                    <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 inline-flex items-center gap-1.5">
                       <Upload className="w-4 h-4 text-[#1d5fa7]" />
                       <span>{uploadingAvatar ? 'Uploading...' : 'Upload New Profile Picture'}</span>
                       <input type="file" accept="image/*" onChange={handleAvatarUpload} disabled={uploadingAvatar} className="hidden" />
@@ -2153,7 +2153,7 @@ export default function App() {
                   </select>
                 </div>
 
-                <button type="submit" disabled={savingProfile || uploadingAvatar} className={`w-full ${PRIMARY} py-3 disabled:opacity-50`}>
+                <button type="submit" disabled={savingProfile || uploadingAvatar} className={`w-full ${PRIMARY} py-2.5 disabled:opacity-50`}>
                   {savingProfile ? 'Saving...' : 'Save Profile'}
                 </button>
               </form>
@@ -2161,7 +2161,7 @@ export default function App() {
 
             {settingsSection === 'help' && (
               <div className="space-y-3 text-sm text-slate-700">
-                <div className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 space-y-2">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
                   <h3 className="font-extrabold text-base text-slate-950">Need Help with BarterBox?</h3>
                   <p>We're here to help with account access, listing issues, trade proposals, and community safety across Botswana.</p>
                   <p className="text-slate-900 font-bold">
@@ -2176,15 +2176,15 @@ export default function App() {
             )}
 
             {settingsSection === 'faq' && (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {FAQ_ITEMS.map((item, idx) => {
                   const isOpen = openFaqIndex === idx;
                   return (
-                    <div key={item.q} className="border-2 border-slate-200 rounded-2xl overflow-hidden">
+                    <div key={item.q} className="border border-slate-200 rounded-xl overflow-hidden">
                       <button
                         type="button"
                         onClick={() => setOpenFaqIndex(isOpen ? -1 : idx)}
-                        className="w-full px-4 py-3 text-left text-sm font-extrabold text-slate-950 bg-slate-50 flex items-center justify-between gap-2"
+                        className="w-full px-4 py-3 text-left text-sm font-bold text-slate-950 bg-slate-50 flex items-center justify-between gap-2"
                       >
                         <span>{item.q}</span>
                         {isOpen ? <ChevronUp className="w-4 h-4 text-slate-600 shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-600 shrink-0" />}
@@ -2220,7 +2220,7 @@ export default function App() {
                     className={INPUT}
                   />
                 </div>
-                <button type="submit" disabled={submittingSupport} className={`w-full ${PRIMARY} py-3 disabled:opacity-50`}>
+                <button type="submit" disabled={submittingSupport} className={`w-full ${PRIMARY} py-2.5 disabled:opacity-50`}>
                   {submittingSupport ? 'Submitting...' : 'Submit Problem Report'}
                 </button>
               </form>
@@ -2249,14 +2249,14 @@ export default function App() {
                     className={INPUT}
                   />
                 </div>
-                <button type="submit" disabled={submittingSupport} className={`w-full ${PRIMARY} py-3 disabled:opacity-50`}>
+                <button type="submit" disabled={submittingSupport} className={`w-full ${PRIMARY} py-2.5 disabled:opacity-50`}>
                   {submittingSupport ? 'Sending...' : 'Send Feedback'}
                 </button>
               </form>
             )}
 
             {settingsSection === 'delete' && (
-              <form onSubmit={handleDeleteAccount} className="space-y-3.5 bg-rose-50 border-2 border-rose-300 rounded-2xl p-4">
+              <form onSubmit={handleDeleteAccount} className="space-y-3.5 bg-rose-50 border border-rose-200 rounded-xl p-4">
                 <h3 className="font-extrabold text-base text-rose-900">Delete Your BarterBox Account</h3>
                 <p className="text-sm text-rose-800">
                   This removes your active listings, clears your profile details, and signs you out. Type <strong>DELETE</strong> below to confirm.
@@ -2272,7 +2272,7 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={deletingAccount || deleteConfirmText.trim().toUpperCase() !== 'DELETE'}
-                  className="w-full bg-rose-600 hover:bg-rose-700 text-white font-extrabold rounded-2xl text-sm py-3 shadow-[0_4px_0_#9f1239] transition disabled:opacity-40"
+                  className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-sm py-2.5 transition disabled:opacity-40"
                 >
                   {deletingAccount ? 'Deleting Account...' : 'Permanently Delete Account'}
                 </button>
@@ -2284,30 +2284,30 @@ export default function App() {
 
       {selectedListing && (
         <Modal onClose={() => setSelectedListing(null)} className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <div className="relative h-56 bg-slate-200">
-            <img src={selectedListing.image_url || FALLBACK_IMG} alt={selectedListing.title} className="w-full h-full object-cover rounded-t-3xl" />
-            <button onClick={() => setSelectedListing(null)} className="absolute top-3 right-3 bg-white border-2 border-slate-200 p-2 rounded-2xl shadow-[0_3px_0_#cbd5e1] hover:bg-slate-50"><X className="w-5 h-5" /></button>
+          <div className="relative h-52 bg-slate-200">
+            <img src={selectedListing.image_url || FALLBACK_IMG} alt={selectedListing.title} className="w-full h-full object-cover rounded-t-2xl" />
+            <button onClick={() => setSelectedListing(null)} className="absolute top-3 right-3 bg-white/95 border border-slate-200 p-1.5 rounded-full shadow-xs hover:bg-white"><X className="w-5 h-5" /></button>
           </div>
           <div className="p-5 space-y-4">
             <div>
               <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-bold text-slate-600">
-                <span className="bg-sky-100 text-[#1d5fa7] border border-sky-300 font-extrabold px-2.5 py-0.5 rounded-full uppercase">{selectedListing.type}</span>
+                <span className="bg-sky-100 text-[#1d5fa7] font-extrabold px-2.5 py-0.5 rounded-full uppercase">{selectedListing.type}</span>
                 <span>{selectedListing.city}</span><span>•</span><span>Posted by {selectedListing.profiles?.full_name || 'Member'}</span>
-                {Number(selectedListing.profiles?.rating) > 0 && <span className="flex items-center gap-0.5 text-amber-700 font-extrabold"><Star className="w-4 h-4 fill-amber-400 text-amber-500" />{Number(selectedListing.profiles.rating).toFixed(1)}</span>}
+                {Number(selectedListing.profiles?.rating) > 0 && <span className="flex items-center gap-0.5 text-amber-700 font-bold"><Star className="w-4 h-4 fill-amber-400 text-amber-500" />{Number(selectedListing.profiles.rating).toFixed(1)}</span>}
               </div>
-              <h2 className="font-black text-2xl text-slate-950 mt-1.5">{selectedListing.title}</h2>
-              <p className="text-base text-slate-700 mt-2 leading-relaxed">{selectedListing.description}</p>
+              <h2 className="font-extrabold text-2xl text-slate-950 mt-1.5">{selectedListing.title}</h2>
+              <p className="text-base text-slate-700 mt-1.5 leading-relaxed">{selectedListing.description}</p>
             </div>
-            <div className="bg-amber-100/80 border-2 border-amber-300 rounded-2xl p-3.5">
-              <span className="text-xs uppercase font-black text-amber-950 block">Owner is looking for:</span>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5">
+              <span className="text-xs uppercase font-extrabold text-amber-950 block">Owner is looking for:</span>
               <p className="text-base font-bold text-slate-900 mt-0.5">{selectedListing.looking_for || 'Open to offers'}</p>
             </div>
             {uid === selectedListing.owner_id ? (
-              <p className="text-sm font-bold text-center text-slate-600 bg-slate-100 py-3 rounded-2xl">This is your own listing.</p>
+              <p className="text-sm font-semibold text-center text-slate-600 bg-slate-100 py-2.5 rounded-xl">This is your own listing.</p>
             ) : !uid ? (
-              <button onClick={() => { setSelectedListing(null); setActiveTab('profile'); }} className={`w-full ${PRIMARY} py-3`}>Sign In to Propose a Trade</button>
+              <button onClick={() => { setSelectedListing(null); setActiveTab('profile'); }} className={`w-full ${PRIMARY} py-2.5`}>Sign In to Propose a Trade</button>
             ) : (
-              <form onSubmit={handleSendProposal} className="space-y-3 border-t-2 border-slate-100 pt-4">
+              <form onSubmit={handleSendProposal} className="space-y-3 border-t border-slate-100 pt-4">
                 <h3 className="font-extrabold text-base text-slate-950">Propose a Barter Offer</h3>
                 {offerable.length > 0 && (
                   <div>
@@ -2322,7 +2322,7 @@ export default function App() {
                   <label className={LABEL}>Or describe a custom trade / skill offer:</label>
                   <textarea rows={2} placeholder="e.g. I can trade my Samsung tablet or 2 days of tiling work..." value={customOffer} onChange={(e) => setCustomOffer(e.target.value)} className={INPUT} />
                 </div>
-                <button type="submit" disabled={submittingProposal} className={`w-full ${PRIMARY} py-3 flex items-center justify-center gap-2 disabled:opacity-50`}>
+                <button type="submit" disabled={submittingProposal} className={`w-full ${PRIMARY} py-2.5 flex items-center justify-center gap-2 disabled:opacity-50`}>
                   <ArrowLeftRight className="w-4 h-4" />{submittingProposal ? 'Sending Offer...' : 'Send Barter Proposal'}
                 </button>
               </form>
@@ -2335,20 +2335,20 @@ export default function App() {
         <Modal onClose={() => setShowListingModal(false)} className="max-w-md max-h-[90vh] overflow-y-auto">
           <div className="p-5 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-              <h2 className="font-black text-xl text-slate-950">{editingId ? 'Edit listing' : 'Post to BarterBox'}</h2>
-              <button onClick={() => setShowListingModal(false)} className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200"><X className="w-5 h-5" /></button>
+              <h2 className="font-extrabold text-xl text-slate-950">{editingId ? 'Edit listing' : 'Post to BarterBox'}</h2>
+              <button onClick={() => setShowListingModal(false)} className="p-1.5 rounded-lg hover:bg-slate-100"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleSaveListing} className="space-y-3.5">
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-2 gap-2">
                 {[['good', 'Physical Good'], ['service', 'Skill / Service']].map(([val, text]) => (
-                  <button key={val} type="button" onClick={() => setForm({ ...form, type: val })} className={`py-2.5 rounded-2xl text-sm font-extrabold border-2 transition ${form.type === val ? 'bg-[#1d5fa7] text-white border-[#1d5fa7] shadow-[0_3px_0_#123c6b]' : 'bg-white text-slate-800 border-slate-200'}`}>{text}</button>
+                  <button key={val} type="button" onClick={() => setForm({ ...form, type: val })} className={`py-2 rounded-xl text-sm font-bold border transition ${form.type === val ? 'bg-[#1d5fa7] text-white border-[#1d5fa7]' : 'bg-white text-slate-800 border-slate-200'}`}>{text}</button>
                 ))}
               </div>
               <div>
                 <label className={LABEL}>Title</label>
                 <input type="text" required placeholder="e.g. Homemade Seswaa, Fresh Eggs, or HP Laptop" value={form.title} onChange={setF('title')} className={INPUT} />
               </div>
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className={LABEL}>Category</label>
                   <select value={form.category} onChange={setF('category')} className={INPUT}>
@@ -2373,23 +2373,23 @@ export default function App() {
               <div>
                 <label className={LABEL}>Listing Photo (Upload from Device or Paste URL)</label>
                 <div className="mt-1.5 flex items-center gap-2">
-                  <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-extrabold px-3.5 py-2.5 rounded-2xl border border-slate-300 flex items-center gap-1.5 transition">
+                  <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 flex items-center gap-1.5 transition">
                     <Upload className="w-4 h-4 text-[#1d5fa7]" />
                     <span>{uploadingImage ? 'Uploading...' : 'Choose File'}</span>
                     <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploadingImage} className="hidden" />
                   </label>
-                  <input type="url" placeholder="Or paste image URL (https://...)" value={form.image_url} onChange={setF('image_url')} className="flex-1 px-3.5 py-2.5 border-2 border-slate-200 rounded-2xl text-sm" />
+                  <input type="url" placeholder="Or paste image URL (https://...)" value={form.image_url} onChange={setF('image_url')} className="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-sm" />
                 </div>
                 {form.image_url && (
-                  <div className="mt-2.5 h-24 w-24 rounded-2xl overflow-hidden border-2 border-slate-200 bg-slate-50">
+                  <div className="mt-2 h-24 w-24 rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
                     <img src={form.image_url} alt="Preview" className="w-full h-full object-cover" />
                   </div>
                 )}
               </div>
-              {listingError && <div className="bg-rose-100 border-2 border-rose-300 text-rose-900 p-3 rounded-2xl text-xs font-bold"><strong>Error:</strong> {listingError}</div>}
-              <div className="flex gap-2.5 pt-2">
-                <button type="button" onClick={() => setShowListingModal(false)} className={`flex-1 ${SECONDARY_3D} py-3`}>Cancel</button>
-                <button type="submit" disabled={submittingListing || uploadingImage} className={`flex-1 ${PRIMARY} py-3 disabled:opacity-50`}>
+              {listingError && <div className="bg-rose-50 border border-rose-200 text-rose-800 p-2.5 rounded-xl text-xs font-semibold"><strong>Error:</strong> {listingError}</div>}
+              <div className="flex gap-2 pt-2">
+                <button type="button" onClick={() => setShowListingModal(false)} className={`flex-1 ${SECONDARY_3D} py-2.5`}>Cancel</button>
+                <button type="submit" disabled={submittingListing || uploadingImage} className={`flex-1 ${PRIMARY} py-2.5 disabled:opacity-50`}>
                   {submittingListing ? 'Saving...' : editingId ? 'Save changes' : 'Publish Listing'}
                 </button>
               </div>
@@ -2402,12 +2402,12 @@ export default function App() {
         <Modal onClose={() => setCounterFor(null)} className="max-w-md">
           <form onSubmit={submitCounter} className="p-5 space-y-3.5">
             <div className="flex items-center justify-between">
-              <h2 className="font-black text-xl text-slate-950">Make a counter-offer</h2>
-              <button type="button" onClick={() => setCounterFor(null)} className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200"><X className="w-5 h-5" /></button>
+              <h2 className="font-extrabold text-xl text-slate-950">Make a counter-offer</h2>
+              <button type="button" onClick={() => setCounterFor(null)} className="p-1.5 rounded-lg hover:bg-slate-100"><X className="w-5 h-5" /></button>
             </div>
             <p className="text-sm text-slate-700">They offered: <strong>{counterFor.offered_listing?.title || counterFor.custom_offer}</strong> for your <strong>{counterFor.target_listing?.title}</strong>. Tell them what you'd accept instead.</p>
             <textarea rows={3} required autoFocus placeholder="e.g. I'd accept the laptop plus two bags of maize meal." value={counterText} onChange={(e) => setCounterText(e.target.value)} className={INPUT} />
-            <button type="submit" className={`w-full ${PRIMARY} py-3`}>Send counter-offer</button>
+            <button type="submit" className={`w-full ${PRIMARY} py-2.5`}>Send counter-offer</button>
           </form>
         </Modal>
       )}
@@ -2416,62 +2416,62 @@ export default function App() {
         <Modal onClose={() => setReviewFor(null)} className="max-w-md">
           <form onSubmit={submitReview} className="p-5 space-y-3.5">
             <div className="flex items-center justify-between">
-              <h2 className="font-black text-xl text-slate-950">Rate this trade</h2>
-              <button type="button" onClick={() => setReviewFor(null)} className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200"><X className="w-5 h-5" /></button>
+              <h2 className="font-extrabold text-xl text-slate-950">Rate this trade</h2>
+              <button type="button" onClick={() => setReviewFor(null)} className="p-1.5 rounded-lg hover:bg-slate-100"><X className="w-5 h-5" /></button>
             </div>
             <p className="text-sm text-slate-700">How was your exchange with <strong>{(reviewFor.sender_id === uid ? reviewFor.receiver : reviewFor.sender)?.full_name || 'this member'}</strong>?</p>
             <Stars value={reviewRating} onChange={setReviewRating} />
             <textarea rows={3} placeholder="Add a comment (optional)" value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} className={INPUT} />
-            <button type="submit" className={`w-full ${PRIMARY} py-3`}>Submit review</button>
+            <button type="submit" className={`w-full ${PRIMARY} py-2.5`}>Submit review</button>
           </form>
         </Modal>
       )}
 
       {activeProposal && (
         <Modal onClose={() => setActiveProposal(null)} className="max-w-md h-[75vh] flex flex-col overflow-hidden">
-          <div className="p-4 border-b-2 border-slate-200 flex items-center justify-between bg-sky-50">
+          <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
             <div>
-              <h3 className="font-black text-base text-slate-950">Trade Negotiation</h3>
-              <p className="text-xs font-bold text-slate-600 line-clamp-1">{activeProposal.target_listing?.title}</p>
+              <h3 className="font-extrabold text-base text-slate-950">Trade Negotiation</h3>
+              <p className="text-xs font-semibold text-slate-600 line-clamp-1">{activeProposal.target_listing?.title}</p>
             </div>
-            <button onClick={() => setActiveProposal(null)} className="p-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100"><X className="w-4 h-4" /></button>
+            <button onClick={() => setActiveProposal(null)} className="p-1.5 rounded-lg hover:bg-slate-100"><X className="w-4 h-4" /></button>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
+          <div className="flex-1 overflow-y-auto p-4 space-y-2.5 bg-slate-50/60">
             {messages.length === 0 ? (
               <p className="text-sm font-medium text-center text-slate-500 pt-8">Coordinate meetup spots or finalize trade details here.</p>
             ) : messages.map((msg) => {
               const isMe = msg.sender_id === uid;
               return (
                 <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                  <div className={`max-w-[82%] px-4 py-2.5 rounded-2xl text-sm font-medium ${isMe ? 'bg-[#1d5fa7] text-white rounded-br-none shadow-[0_3px_0_#123c6b]' : 'bg-white border-2 border-slate-200 text-slate-900 rounded-bl-none shadow-[0_3px_0_#e2e8f0]'}`}>{msg.content}</div>
+                  <div className={`max-w-[82%] px-3.5 py-2 rounded-2xl text-sm font-medium ${isMe ? 'bg-[#1d5fa7] text-white rounded-br-none shadow-xs' : 'bg-white border border-slate-200 text-slate-900 rounded-bl-none shadow-xs'}`}>{msg.content}</div>
                 </div>
               );
             })}
           </div>
-          <form onSubmit={handleSendMessage} className="p-3 border-t-2 border-slate-200 bg-white flex gap-2">
-            <input type="text" placeholder="Write a message..." value={newMessage} onChange={(e) => setNewMessage(e.target.value)} className="flex-1 px-4 py-2.5 border-2 border-slate-200 rounded-2xl text-sm font-medium focus:outline-none focus:border-[#1d5fa7]" />
-            <button type="submit" className="bg-[#1d5fa7] text-white p-3 rounded-2xl shadow-[0_3px_0_#123c6b] hover:bg-[#164b84] active:translate-y-0.5" title="Send"><Send className="w-4 h-4" /></button>
+          <form onSubmit={handleSendMessage} className="p-3 border-t border-slate-200 bg-white flex gap-2">
+            <input type="text" placeholder="Write a message..." value={newMessage} onChange={(e) => setNewMessage(e.target.value)} className="flex-1 px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-medium focus:outline-none focus:border-[#1d5fa7]" />
+            <button type="submit" className="bg-[#1d5fa7] text-white p-2.5 rounded-xl shadow-xs hover:bg-[#164b84] active:scale-[0.98]" title="Send"><Send className="w-4 h-4" /></button>
           </form>
         </Modal>
       )}
 
-      <nav className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t-2 border-slate-200 z-40 shadow-[0_-4px_12px_rgba(15,23,42,0.06)]">
-        <div className="max-w-md mx-auto flex justify-around py-2">
+      <nav className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t border-slate-200 z-40 shadow-sm">
+        <div className="max-w-md mx-auto flex justify-around py-1.5">
           {navItems.map(({ id, label, Icon }) => {
             const active = activeTab === id;
             return (
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`flex flex-col items-center gap-1 px-3.5 py-1.5 rounded-2xl text-xs font-extrabold relative transition-all ${
+                className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-xs font-bold relative transition-all ${
                   active
-                    ? 'text-[#1d5fa7] bg-sky-100 -translate-y-1 shadow-[0_3px_0_#bae6fd]'
+                    ? 'text-[#1d5fa7] bg-sky-50'
                     : 'text-slate-600 hover:text-slate-950'
                 }`}
               >
-                <Icon className={`w-5 h-5 ${active ? 'stroke-[2.5]' : ''}`} />
+                <Icon className={`w-5 h-5 ${active ? 'stroke-[2.4]' : ''}`} />
                 <span>{label}</span>
-                {id === 'trades' && needsAction > 0 && <span className="w-2.5 h-2.5 rounded-full bg-rose-600 absolute top-1 right-2.5" />}
+                {id === 'trades' && needsAction > 0 && <span className="w-2 h-2 rounded-full bg-rose-600 absolute top-1 right-2.5" />}
               </button>
             );
           })}
