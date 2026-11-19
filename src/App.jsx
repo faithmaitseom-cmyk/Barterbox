@@ -21,6 +21,16 @@ const CATEGORIES = [
   'Agriculture & Livestock', 'Books & Education'
 ];
 
+const PRODUCT_CONDITIONS = ['New', 'Mint', 'Good', 'Fair', 'Old'];
+
+const CONDITION_BADGE = {
+  New: 'bg-emerald-100 text-emerald-950 border-emerald-300',
+  Mint: 'bg-teal-100 text-teal-950 border-teal-300',
+  Good: 'bg-sky-100 text-sky-950 border-sky-300',
+  Fair: 'bg-amber-100 text-amber-950 border-amber-300',
+  Old: 'bg-stone-200 text-stone-900 border-stone-300'
+};
+
 const SAFETY_CHECKLIST = [
   { id: 'public_spot', text: 'Meet in a busy, well-lit public place during daylight hours (e.g. shopping mall or near a police station).' },
   { id: 'inspect_item', text: 'Inspect goods thoroughly (test electronics, check condition or expiry dates) before handing over your item.' },
@@ -48,7 +58,16 @@ const FAQ_ITEMS = [
 ];
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=80';
-const EMPTY_FORM = { title: '', description: '', type: 'good', category: 'Food & Drinks', city: 'Gaborone', looking_for: '', image_url: '' };
+const EMPTY_FORM = {
+  title: '',
+  description: '',
+  type: 'good',
+  condition: 'Mint',
+  category: 'Food & Drinks',
+  city: 'Gaborone',
+  looking_for: '',
+  image_url: ''
+};
 
 const STARTER_LISTINGS = [
   {
@@ -56,6 +75,7 @@ const STARTER_LISTINGS = [
     title: 'Homemade Seswaa (2kg Tub)',
     description: 'Slow-cooked beef seswaa prepared fresh in Gaborone, sealed for easy sharing.',
     type: 'good',
+    condition: 'New',
     category: 'Food & Drinks',
     city: 'Gaborone',
     looking_for: 'Fresh farm eggs, charcoal, or household goods',
@@ -68,6 +88,7 @@ const STARTER_LISTINGS = [
     title: 'Phone & Laptop Diagnostics',
     description: 'Battery check, storage cleanup, and setup help for Android phones and laptops.',
     type: 'service',
+    condition: 'Mint',
     category: 'Electronics',
     city: 'Gaborone',
     looking_for: 'Power bank, chargers, or skill swap',
@@ -80,6 +101,7 @@ const STARTER_LISTINGS = [
     title: 'Potted Herbs & Garden Starters',
     description: 'Healthy mint, basil, and aloe starters ready for home gardens in Gaborone.',
     type: 'good',
+    condition: 'Good',
     category: 'Home & Garden',
     city: 'Gaborone',
     looking_for: 'Plant pots, garden soil, or books',
@@ -694,6 +716,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCity, setSelectedCity] = useState('All Cities');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCondition, setSelectedCondition] = useState('All');
   const [listingTypeFilter, setListingTypeFilter] = useState('all');
   const [tradeFilter, setTradeFilter] = useState('open');
 
@@ -1041,7 +1064,7 @@ export default function App() {
   };
 
   const fetchProposals = async () => {
-    const { data } = await supabase.from('trade_proposals').select(`
+    const baseSelect = `
       *,
       sender:profiles!trade_proposals_sender_id_fkey(full_name, city),
       receiver:profiles!trade_proposals_receiver_id_fkey(full_name, city),
@@ -1049,7 +1072,31 @@ export default function App() {
       offered_listing:listings!trade_proposals_offered_listing_id_fkey(id, title, image_url, type),
       completion:trade_completions(*),
       reviews(reviewer_id)
-    `).or(`sender_id.eq.${uid},receiver_id.eq.${uid}`).order('created_at', { ascending: false });
+    `;
+    const withConditionSelect = `
+      *,
+      sender:profiles!trade_proposals_sender_id_fkey(full_name, city),
+      receiver:profiles!trade_proposals_receiver_id_fkey(full_name, city),
+      target_listing:listings!trade_proposals_target_listing_id_fkey(id, title, image_url, type, condition),
+      offered_listing:listings!trade_proposals_offered_listing_id_fkey(id, title, image_url, type, condition),
+      completion:trade_completions(*),
+      reviews(reviewer_id)
+    `;
+
+    let { data, error } = await supabase
+      .from('trade_proposals')
+      .select(withConditionSelect)
+      .or(`sender_id.eq.${uid},receiver_id.eq.${uid}`)
+      .order('created_at', { ascending: false });
+
+    if (error && error.message.toLowerCase().includes('condition')) {
+      ({ data } = await supabase
+        .from('trade_proposals')
+        .select(baseSelect)
+        .or(`sender_id.eq.${uid},receiver_id.eq.${uid}`)
+        .order('created_at', { ascending: false }));
+    }
+
     if (data) setProposals(data);
   };
 
@@ -1185,7 +1232,16 @@ export default function App() {
       return;
     }
     setEditingId(l.id);
-    setForm({ title: l.title, description: l.description || '', type: l.type || 'good', category: l.category, city: l.city, looking_for: l.looking_for || '', image_url: l.image_url || '' });
+    setForm({
+      title: l.title,
+      description: l.description || '',
+      type: l.type || 'good',
+      condition: PRODUCT_CONDITIONS.includes(l.condition) ? l.condition : (l.type === 'service' ? 'Mint' : 'Good'),
+      category: l.category,
+      city: l.city,
+      looking_for: l.looking_for || '',
+      image_url: l.image_url || ''
+    });
     setListingError('');
     setShowListingModal(true);
   };
@@ -1195,14 +1251,27 @@ export default function App() {
     if (!uid) return;
     setSubmittingListing(true);
     setListingError('');
-    const body = {
-      title: form.title.trim(), description: form.description.trim(), type: form.type,
-      category: form.category, city: form.city, looking_for: form.looking_for.trim(),
+    const baseBody = {
+      title: form.title.trim(),
+      description: form.description.trim(),
+      type: form.type,
+      category: form.category,
+      city: form.city,
+      looking_for: form.looking_for.trim(),
       image_url: form.image_url.trim() || FALLBACK_IMG
     };
-    const { error } = editingId
-      ? await supabase.from('listings').update(body).eq('id', editingId)
-      : await supabase.from('listings').insert({ ...body, owner_id: uid, status: 'active' });
+    const fullBody = { ...baseBody, condition: form.condition || 'Good' };
+
+    let { error } = editingId
+      ? await supabase.from('listings').update(fullBody).eq('id', editingId)
+      : await supabase.from('listings').insert({ ...fullBody, owner_id: uid, status: 'active' });
+
+    if (error && error.message.toLowerCase().includes('condition')) {
+      ({ error } = editingId
+        ? await supabase.from('listings').update(baseBody).eq('id', editingId)
+        : await supabase.from('listings').insert({ ...baseBody, owner_id: uid, status: 'active' }));
+    }
+
     setSubmittingListing(false);
     if (error) { setListingError(error.message); return; }
     setShowListingModal(false);
@@ -1337,13 +1406,14 @@ export default function App() {
     if (activeTab === 'wishlist' && !favorites.includes(item.id)) return false;
     if (selectedCity !== 'All Cities' && item.city !== selectedCity) return false;
     if (selectedCategory !== 'All' && item.category !== selectedCategory) return false;
+    if (selectedCondition !== 'All' && (item.condition || 'Good') !== selectedCondition) return false;
     if (listingTypeFilter !== 'all' && item.type !== listingTypeFilter) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      if (![item.title, item.description, item.looking_for].some((t) => t?.toLowerCase().includes(q))) return false;
+      if (![item.title, item.description, item.looking_for, item.condition].some((t) => t?.toLowerCase().includes(q))) return false;
     }
     return true;
-  }), [sourceListings, activeTab, favorites, selectedCity, selectedCategory, listingTypeFilter, searchQuery]);
+  }), [sourceListings, activeTab, favorites, selectedCity, selectedCategory, selectedCondition, listingTypeFilter, searchQuery]);
 
   const offerable = myListings.filter((l) => l.status === 'active');
   const unread = notifications.filter((n) => !n.read).length;
@@ -1469,6 +1539,10 @@ export default function App() {
                     <option value="good">Goods Only</option>
                     <option value="service">Services Only</option>
                   </select>
+                  <select value={selectedCondition} onChange={(e) => setSelectedCondition(e.target.value)} aria-label="Filter by condition" className="flex-1 sm:flex-initial px-3 py-2.5 bg-emerald-50/80 border border-emerald-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:border-[#1d5fa7]">
+                    <option value="All">All Conditions</option>
+                    {PRODUCT_CONDITIONS.map((cond) => <option key={cond} value={cond}>{cond}</option>)}
+                  </select>
                 </div>
               </div>
 
@@ -1508,18 +1582,24 @@ export default function App() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredListings.map((item) => {
                   const isFav = favorites.includes(item.id);
+                  const cond = item.condition || 'Good';
                   return (
                     <div key={item.id} onClick={() => setSelectedListing(item)} className={`${CARD} overflow-hidden hover:-translate-y-0.5 transition-all cursor-pointer flex flex-col`}>
                       <div className="relative h-44 bg-slate-200 border-b border-slate-100">
                         <img src={item.image_url || FALLBACK_IMG} alt={item.title} className="w-full h-full object-cover" />
-                        <span className={`absolute top-2.5 left-2.5 text-xs font-extrabold px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-xs ${
-                          item.type === 'service'
-                            ? 'bg-amber-200 text-slate-950 border border-amber-300'
-                            : 'bg-sky-600 text-white'
-                        }`}>
-                          {item.type === 'service' ? <Briefcase className="w-3.5 h-3.5" /> : <Package className="w-3.5 h-3.5" />}
-                          {item.type === 'service' ? 'Service' : 'Good'}
-                        </span>
+                        <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                          <span className={`text-xs font-extrabold px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-xs ${
+                            item.type === 'service'
+                              ? 'bg-amber-200 text-slate-950 border border-amber-300'
+                              : 'bg-sky-600 text-white'
+                          }`}>
+                            {item.type === 'service' ? <Briefcase className="w-3.5 h-3.5" /> : <Package className="w-3.5 h-3.5" />}
+                            {item.type === 'service' ? 'Service' : 'Good'}
+                          </span>
+                          <span className={`text-xs font-extrabold px-2.5 py-1 rounded-lg border shadow-xs ${CONDITION_BADGE[cond] || CONDITION_BADGE.Good}`}>
+                            {cond}
+                          </span>
+                        </div>
                         <button onClick={(e) => toggleFavorite(e, item.id)} className="absolute top-2.5 right-2.5 w-9 h-9 rounded-full bg-white/95 border border-slate-200 flex items-center justify-center shadow-xs hover:bg-white transition" title="Save to wishlist">
                           <Heart className={`w-4 h-4 ${isFav ? 'fill-rose-600 text-rose-600' : 'text-slate-700'}`} />
                         </button>
@@ -1576,6 +1656,9 @@ export default function App() {
                   const theirDone = c ? (amSender ? c.owner_confirmed : c.proposer_confirmed) : false;
                   const reviewed = (p.reviews || []).some((r) => r.reviewer_id === uid);
 
+                  const targetCond = p.target_listing?.condition;
+                  const offeredCond = p.offered_listing?.condition;
+
                   const proposalChecks = checkedSafety[p.id] || {};
                   const checkedCount = SAFETY_CHECKLIST.filter((s) => proposalChecks[s.id]).length;
                   const allSafetyChecked = checkedCount === SAFETY_CHECKLIST.length;
@@ -1589,8 +1672,28 @@ export default function App() {
                         <span className={`text-xs font-extrabold uppercase px-2.5 py-1 rounded-lg ${STATUS_STYLE[p.status]}`}>{p.status}</span>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 border border-slate-200 p-3 rounded-xl text-sm">
-                        <div><span className="text-xs font-bold uppercase text-slate-500 block">Target Item:</span><strong className="text-slate-950 text-base">{p.target_listing?.title}</strong></div>
-                        <div><span className="text-xs font-bold uppercase text-slate-500 block">Offered in Exchange:</span><strong className="text-[#1d5fa7] text-base">{p.offered_listing?.title || p.custom_offer}</strong></div>
+                        <div className="space-y-1">
+                          <span className="text-xs font-bold uppercase text-slate-500 block">Target Item:</span>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <strong className="text-slate-950 text-base">{p.target_listing?.title}</strong>
+                            {targetCond && (
+                              <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded-md border ${CONDITION_BADGE[targetCond] || CONDITION_BADGE.Good}`}>
+                                {targetCond}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-xs font-bold uppercase text-slate-500 block">Offered in Exchange:</span>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <strong className="text-[#1d5fa7] text-base">{p.offered_listing?.title || p.custom_offer}</strong>
+                            {p.offered_listing && offeredCond && (
+                              <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded-md border ${CONDITION_BADGE[offeredCond] || CONDITION_BADGE.Good}`}>
+                                {offeredCond}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                       {p.status === 'countered' && p.counter_text && (
                         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm">
@@ -1949,12 +2052,13 @@ export default function App() {
                     <div className="space-y-2.5">
                       {myListings.map((item) => {
                         const editable = canEditListing(item);
+                        const cond = item.condition || 'Good';
                         return (
                           <div key={item.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm space-y-2">
                             <div className="flex items-center justify-between gap-2">
                               <div className="min-w-0">
                                 <p className="font-extrabold text-slate-950 truncate">{item.title}</p>
-                                <p className="text-xs font-medium text-slate-600">{item.city} • {item.category}</p>
+                                <p className="text-xs font-medium text-slate-600">{item.city} • {item.category} • Condition: <strong>{cond}</strong></p>
                               </div>
                               <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold capitalize ${STATUS_STYLE[item.status]}`}>{item.status}</span>
                             </div>
@@ -2292,6 +2396,9 @@ export default function App() {
             <div>
               <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-bold text-slate-600">
                 <span className="bg-sky-100 text-[#1d5fa7] font-extrabold px-2.5 py-0.5 rounded-full uppercase">{selectedListing.type}</span>
+                <span className={`font-extrabold px-2.5 py-0.5 rounded-full border ${CONDITION_BADGE[selectedListing.condition || 'Good'] || CONDITION_BADGE.Good}`}>
+                  Condition: {selectedListing.condition || 'Good'}
+                </span>
                 <span>{selectedListing.city}</span><span>•</span><span>Posted by {selectedListing.profiles?.full_name || 'Member'}</span>
                 {Number(selectedListing.profiles?.rating) > 0 && <span className="flex items-center gap-0.5 text-amber-700 font-bold"><Star className="w-4 h-4 fill-amber-400 text-amber-500" />{Number(selectedListing.profiles.rating).toFixed(1)}</span>}
               </div>
@@ -2314,7 +2421,11 @@ export default function App() {
                     <label className={LABEL}>Offer one of your listed items:</label>
                     <select value={offeredListingId} onChange={(e) => setOfferedListingId(e.target.value)} className={INPUT}>
                       <option value="">-- Select your item/service (optional) --</option>
-                      {offerable.map((ml) => <option key={ml.id} value={ml.id}>{ml.title}</option>)}
+                      {offerable.map((ml) => (
+                        <option key={ml.id} value={ml.id}>
+                          {ml.title} ({ml.condition || 'Good'})
+                        </option>
+                      ))}
                     </select>
                   </div>
                 )}
@@ -2350,21 +2461,27 @@ export default function App() {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
+                  <label className={LABEL}>Condition</label>
+                  <select value={form.condition} onChange={setF('condition')} className={INPUT}>
+                    {PRODUCT_CONDITIONS.map((cond) => <option key={cond} value={cond}>{cond}</option>)}
+                  </select>
+                </div>
+                <div>
                   <label className={LABEL}>Category</label>
                   <select value={form.category} onChange={setF('category')} className={INPUT}>
                     {CATEGORIES.filter((c) => c !== 'All').map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label className={LABEL}>Location</label>
-                  <select value={form.city} onChange={setF('city')} className={INPUT}>
-                    {BW_CITIES.filter((c) => c !== 'All Cities').map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
               </div>
               <div>
-                <label className={LABEL}>Description & Condition</label>
-                <textarea rows={2} required placeholder="Describe ingredients, quantity, or condition..." value={form.description} onChange={setF('description')} className={INPUT} />
+                <label className={LABEL}>Location</label>
+                <select value={form.city} onChange={setF('city')} className={INPUT}>
+                  {BW_CITIES.filter((c) => c !== 'All Cities').map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={LABEL}>Description & Condition Notes</label>
+                <textarea rows={2} required placeholder="Describe condition details, wear/tear, or service scope..." value={form.description} onChange={setF('description')} className={INPUT} />
               </div>
               <div>
                 <label className={LABEL}>What do you want in exchange?</label>
