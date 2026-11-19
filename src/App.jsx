@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import {
   Search, Plus, Heart, MessageSquare, User, MapPin, ArrowLeftRight, Send,
@@ -151,6 +151,55 @@ const canEditListing = (item, nowMs = Date.now()) => {
   const createdMs = new Date(item.created_at).getTime();
   if (Number.isNaN(createdMs)) return true;
   return nowMs - createdMs <= ONE_HOUR_MS;
+};
+
+const shuffleArray = (arr) => {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+};
+
+const playMessageAlertSound = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc1.type = 'sine';
+    osc2.type = 'triangle';
+    osc1.frequency.setValueAtTime(740, now);
+    osc1.frequency.exponentialRampToValueAtTime(987.77, now + 0.14);
+    osc2.frequency.setValueAtTime(987.77, now + 0.08);
+    osc2.frequency.exponentialRampToValueAtTime(1174.66, now + 0.24);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.exponentialRampToValueAtTime(0.14, now + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc1.start(now);
+    osc2.start(now + 0.08);
+    osc1.stop(now + 0.16);
+    osc2.stop(now + 0.3);
+
+    setTimeout(() => {
+      ctx.close().catch(() => {});
+    }, 450);
+  } catch {
+    // Audio playback can be blocked before first user gesture
+  }
 };
 
 function SupportEmailLink({ email = SUPPORT_EMAIL, subject = '' }) {
@@ -754,6 +803,14 @@ export default function App() {
   const [favorites, setFavorites] = useState([]);
   const [proposals, setProposals] = useState([]);
   const [chatPreviews, setChatPreviews] = useState({});
+  const [lastReadMap, setLastReadMap] = useState(() => {
+    if (typeof window === 'undefined') return {};
+    try {
+      return JSON.parse(localStorage.getItem('bb_chat_last_read') || '{}');
+    } catch {
+      return {};
+    }
+  });
   const [notifications, setNotifications] = useState([]);
   const [myReviews, setMyReviews] = useState([]);
   const [loadingData, setLoadingData] = useState(false);
@@ -782,6 +839,49 @@ export default function App() {
   const [reviewComment, setReviewComment] = useState('');
 
   const uid = session?.user?.id;
+  const proposalIdsRef = useRef([]);
+  const activeProposalIdRef = useRef(null);
+  const activeTabRef = useRef(activeTab);
+
+  useEffect(() => {
+    activeProposalIdRef.current = activeProposal?.id || null;
+  }, [activeProposal?.id]);
+
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('bb_chat_last_read', JSON.stringify(lastReadMap));
+    } catch {
+      // Ignore storage quota errors
+    }
+  }, [lastReadMap]);
+
+  const markProposalChatRead = (proposalId, timestampIso = new Date().toISOString()) => {
+    if (!proposalId) return;
+    setLastReadMap((prev) => {
+      const currentTs = prev[proposalId] ? new Date(prev[proposalId]).getTime() : 0;
+      const nextTs = new Date(timestampIso).getTime() || Date.now();
+      if (nextTs <= currentTs) return prev;
+      return { ...prev, [proposalId]: new Date(nextTs).toISOString() };
+    });
+  };
+
+  const markAllChatsRead = (proposalList = proposals) => {
+    if (!Array.isArray(proposalList) || proposalList.length === 0) return;
+    const nowIso = new Date().toISOString();
+    setLastReadMap((prev) => {
+      const updated = { ...prev };
+      for (const p of proposalList) {
+        const latestMsgTs = chatPreviews[p.id]?.created_at;
+        updated[p.id] = latestMsgTs || nowIso;
+      }
+      return updated;
+    });
+  };
+
   const setF = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   useEffect(() => {
@@ -888,7 +988,7 @@ export default function App() {
 
   useEffect(() => {
     if (!supabase) return;
-    fetchListings();
+    fetchListings(false);
   }, []);
 
   useEffect(() => {
@@ -911,21 +1011,44 @@ export default function App() {
   }, [uid]);
 
   useEffect(() => {
-    if (!supabase || !activeProposal) return;
-    const id = activeProposal.id;
-    const ch = supabase.channel('bb-chat-' + id)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `proposal_id=eq.${id}` },
-        () => { loadMessages(id); fetchChatPreviews(proposals); })
+    if (!supabase || !uid) return;
+    const msgCh = supabase.channel('bb-incoming-msgs-' + uid)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        const row = payload?.new;
+        if (!row) return;
+        const belongsToUserTrade = proposalIdsRef.current.includes(row.proposal_id);
+        if (!belongsToUserTrade) {
+          fetchProposals();
+          return;
+        }
+
+        setChatPreviews((prev) => ({
+          ...prev,
+          [row.proposal_id]: row
+        }));
+
+        if (row.sender_id !== uid) {
+          if (activeProposalIdRef.current === row.proposal_id) {
+            loadMessages(row.proposal_id);
+            markProposalChatRead(row.proposal_id, row.created_at || new Date().toISOString());
+          } else {
+            playMessageAlertSound();
+          }
+        }
+      })
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [activeProposal?.id, proposals]);
+
+    return () => { supabase.removeChannel(msgCh); };
+  }, [uid]);
 
   const fetchChatPreviews = async (proposalList) => {
     if (!supabase || !Array.isArray(proposalList) || proposalList.length === 0) {
+      proposalIdsRef.current = [];
       setChatPreviews({});
       return;
     }
     const ids = proposalList.map((p) => p.id).filter(Boolean);
+    proposalIdsRef.current = ids;
     if (ids.length === 0) return;
 
     const { data, error } = await supabase
@@ -1167,19 +1290,43 @@ export default function App() {
     setActiveTab('explore');
   };
 
-  const toggleSafetyCheck = (proposalId, stepId) => {
-    setCheckedSafety((prev) => {
-      const current = prev[proposalId] || {};
-      return {
-        ...prev,
-        [proposalId]: { ...current, [stepId]: !current[stepId] }
-      };
-    });
+  const toggleSafetyCheck = (proposal, stepId) => {
+    if (!proposal?.id) return;
+    const isAcceptor = uid && proposal.receiver_id === uid;
+    if (!isAcceptor) return;
+
+    const currentChecks = checkedSafety[proposal.id] || {};
+    const nextValue = !currentChecks[stepId];
+    const nextChecks = { ...currentChecks, [stepId]: nextValue };
+    const allTickedNow = SAFETY_CHECKLIST.every((step) => !!nextChecks[step.id]);
+
+    if (allTickedNow) {
+      setCheckedSafety((prev) => {
+        const copy = { ...prev };
+        delete copy[proposal.id];
+        return copy;
+      });
+      openChat(proposal);
+      return;
+    }
+
+    setCheckedSafety((prev) => ({
+      ...prev,
+      [proposal.id]: nextChecks
+    }));
   };
 
-  const fetchListings = async () => {
+  const fetchListings = async (shouldShuffle = false) => {
     setLoadingData(true);
     setLoadError('');
+    if (!supabase) {
+      if (shouldShuffle) {
+        setListings((prev) => shuffleArray(prev.length > 0 ? prev : STARTER_LISTINGS));
+      }
+      setLoadingData(false);
+      return;
+    }
+
     let { data, error } = await supabase.from('listings')
       .select('*, profiles(full_name, city, avatar_url, rating)')
       .eq('status', 'active').order('created_at', { ascending: false });
@@ -1188,8 +1335,14 @@ export default function App() {
       ({ data, error } = await supabase.from('listings').select('*')
         .eq('status', 'active').order('created_at', { ascending: false }));
     }
-    if (error) setLoadError(error.message);
-    if (data) setListings(data);
+    if (error) {
+      setLoadError(error.message);
+      if (shouldShuffle) {
+        setListings((prev) => shuffleArray(prev.length > 0 ? prev : STARTER_LISTINGS));
+      }
+    } else if (data) {
+      setListings(shouldShuffle ? shuffleArray(data) : data);
+    }
     setLoadingData(false);
   };
 
@@ -1225,7 +1378,7 @@ export default function App() {
 
     if (!error && richData) {
       setProposals(richData);
-      fetchChatPreviews(richData);
+      await fetchChatPreviews(richData);
       return;
     }
 
@@ -1272,7 +1425,7 @@ export default function App() {
     }));
 
     setProposals(hydrated);
-    fetchChatPreviews(hydrated);
+    await fetchChatPreviews(hydrated);
   };
 
   const fetchNotifications = async () => {
@@ -1336,11 +1489,14 @@ export default function App() {
       if (data.length > 0) {
         const latest = data[data.length - 1];
         setChatPreviews((prev) => ({ ...prev, [proposalId]: latest }));
+        if (activeProposalIdRef.current === proposalId) {
+          markProposalChatRead(proposalId, latest.created_at || new Date().toISOString());
+        }
       }
     }
   };
 
-  const refreshAll = () => { fetchListings(); fetchMyListings(); fetchProposals(); };
+  const refreshAll = () => { fetchListings(true); fetchMyListings(); fetchProposals(); };
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -1605,7 +1761,22 @@ export default function App() {
     fetchProposals();
   };
 
-  const openChat = async (p) => { setActiveProposal(p); setMessages([]); await loadMessages(p.id); };
+  const openChat = async (p) => {
+    if (!p) return;
+    setActiveProposal(p);
+    setMessages([]);
+    const latestTs = chatPreviews[p.id]?.created_at || p.updated_at || new Date().toISOString();
+    markProposalChatRead(p.id, latestTs);
+    await loadMessages(p.id);
+  };
+
+  const handleOpenInbox = async () => {
+    setActiveTab('messages');
+    markAllChatsRead(proposals);
+    if (uid) {
+      await fetchProposals();
+    }
+  };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -1616,6 +1787,7 @@ export default function App() {
     if (error) alert(error.message);
     else {
       await loadMessages(activeProposal.id);
+      markProposalChatRead(activeProposal.id, new Date().toISOString());
       fetchChatPreviews(proposals);
     }
   };
@@ -1651,6 +1823,24 @@ export default function App() {
 
   const offerable = myListings.filter((l) => l.status === 'active');
   const unread = notifications.filter((n) => !n.read).length;
+
+  const unreadInboxCount = useMemo(() => {
+    if (!uid || activeTab === 'messages') return 0;
+    let count = 0;
+    for (const p of proposals) {
+      const latestMsg = chatPreviews[p.id];
+      if (!latestMsg || latestMsg.sender_id === uid) continue;
+      if (activeProposal?.id === p.id) continue;
+      const lastReadIso = lastReadMap[p.id];
+      const lastReadMs = lastReadIso ? new Date(lastReadIso).getTime() : 0;
+      const msgMs = new Date(latestMsg.created_at).getTime();
+      if (msgMs > lastReadMs) {
+        count += 1;
+      }
+    }
+    return count;
+  }, [uid, activeTab, proposals, chatPreviews, lastReadMap, activeProposal?.id]);
+
   const needsAction = proposals.filter((p) =>
     (p.status === 'pending' && p.receiver_id === uid) || (p.status === 'countered' && p.sender_id === uid)).length;
   const visibleTrades = proposals.filter((p) => TRADE_FILTERS[tradeFilter].statuses.includes(p.status));
@@ -1719,7 +1909,7 @@ export default function App() {
               <>
                 <button
                   type="button"
-                  onClick={() => setActiveTab('messages')}
+                  onClick={handleOpenInbox}
                   className={`relative p-2 rounded-xl border text-slate-800 transition ${
                     activeTab === 'messages'
                       ? 'bg-sky-100 border-sky-300 text-[#1d5fa7]'
@@ -1729,9 +1919,9 @@ export default function App() {
                   aria-label="Messages"
                 >
                   <Inbox className="w-5 h-5" />
-                  {proposals.length > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#1d5fa7] text-white text-[10px] font-extrabold flex items-center justify-center">
-                      {proposals.length > 9 ? '9+' : proposals.length}
+                  {unreadInboxCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-extrabold flex items-center justify-center">
+                      {unreadInboxCount > 9 ? '9+' : unreadInboxCount}
                     </span>
                   )}
                 </button>
@@ -1861,7 +2051,7 @@ export default function App() {
 
             <div className="flex items-center justify-between pt-1">
               <h2 className="font-extrabold text-xl text-slate-950">{activeTab === 'wishlist' ? 'Saved Wishlist Items' : 'Available for Barter'}</h2>
-              <button onClick={fetchListings} className={BACK_BTN}><RefreshCw className="w-4 h-4" /> Refresh</button>
+              <button type="button" onClick={() => fetchListings(true)} className={BACK_BTN}><RefreshCw className="w-4 h-4" /> Refresh</button>
             </div>
 
             {loadError && <div className="bg-rose-50 border border-rose-200 text-rose-900 p-3.5 rounded-xl text-sm font-medium"><strong>Notice:</strong> {loadError}</div>}
@@ -2065,7 +2255,7 @@ export default function App() {
             <div className="flex items-center justify-between">
               <h2 className="font-extrabold text-2xl text-slate-950">Messages</h2>
               {uid && (
-                <button onClick={() => fetchProposals()} className={BACK_BTN}>
+                <button type="button" onClick={() => { fetchProposals(); fetchListings(true); }} className={BACK_BTN}>
                   <RefreshCw className="w-4 h-4" /> Refresh
                 </button>
               )}
@@ -2089,17 +2279,26 @@ export default function App() {
                   const partner = amSender ? p.receiver : p.sender;
                   const latestMsg = chatPreviews[p.id];
                   const timestamp = latestMsg?.created_at || p.updated_at || p.created_at;
+                  const lastReadMs = lastReadMap[p.id] ? new Date(lastReadMap[p.id]).getTime() : 0;
+                  const isUnreadThread =
+                    !!latestMsg &&
+                    latestMsg.sender_id !== uid &&
+                    new Date(latestMsg.created_at).getTime() > lastReadMs;
+
                   return (
                     <button
                       key={p.id}
                       type="button"
                       onClick={() => openChat(p)}
-                      className={`${CARD} w-full text-left p-4 hover:border-sky-300 flex items-center justify-between gap-3`}
+                      className={`${CARD} w-full text-left p-4 hover:border-sky-300 flex items-center justify-between gap-3 ${
+                        isUnreadThread ? 'border-sky-300 bg-sky-50/50' : ''
+                      }`}
                     >
                       <div className="min-w-0 flex-1 space-y-1">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-extrabold text-base text-slate-950 truncate">
-                            {partner?.full_name || 'BarterBox Member'}
+                          <span className="font-extrabold text-base text-slate-950 truncate flex items-center gap-2">
+                            <span>{partner?.full_name || 'BarterBox Member'}</span>
+                            {isUnreadThread && <span className="w-2.5 h-2.5 rounded-full bg-rose-600 shrink-0" />}
                           </span>
                           <span className="text-xs font-semibold text-slate-500 shrink-0">
                             {ago(timestamp)}
@@ -2108,7 +2307,7 @@ export default function App() {
                         <p className="text-xs font-bold text-[#1d5fa7] truncate">
                           Trade: {p.target_listing?.title || 'Listing'} ↔ {p.offered_listing?.title || p.custom_offer || 'Offer'}
                         </p>
-                        <p className="text-sm text-slate-700 truncate">
+                        <p className={`text-sm truncate ${isUnreadThread ? 'font-bold text-slate-950' : 'text-slate-700'}`}>
                           {latestMsg
                             ? `${latestMsg.sender_id === uid ? 'You: ' : ''}${latestMsg.content}`
                             : 'Tap to open Trade Chat and coordinate your swap.'}
@@ -2147,6 +2346,7 @@ export default function App() {
                   </div>
                 ) : visibleTrades.map((p) => {
                   const amSender = p.sender_id === uid;
+                  const isAcceptor = p.receiver_id === uid;
                   const other = amSender ? p.receiver : p.sender;
                   const c = Array.isArray(p.completion) ? p.completion[0] : p.completion;
                   const myDone = c ? (amSender ? c.proposer_confirmed : c.owner_confirmed) : false;
@@ -2158,7 +2358,6 @@ export default function App() {
 
                   const proposalChecks = checkedSafety[p.id] || {};
                   const checkedCount = SAFETY_CHECKLIST.filter((s) => proposalChecks[s.id]).length;
-                  const allSafetyChecked = checkedCount === SAFETY_CHECKLIST.length;
 
                   return (
                     <div key={p.id} className={`${CARD} p-4 sm:p-5 space-y-3.5`}>
@@ -2199,17 +2398,20 @@ export default function App() {
                         </div>
                       )}
 
-                      {['pending', 'countered', 'accepted'].includes(p.status) && (
+                      {p.status === 'accepted' && isAcceptor && (
                         <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-3.5 space-y-2.5">
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-sm font-extrabold text-amber-950 flex items-center gap-1.5">
                               <ShieldCheck className="w-4 h-4 text-[#1d5fa7] shrink-0" />
                               Safety Tips Before Finalizing Trade Meet
                             </span>
-                            <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${allSafetyChecked ? 'bg-emerald-200 text-emerald-950' : 'bg-amber-200 text-amber-950'}`}>
+                            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-950">
                               {checkedCount}/{SAFETY_CHECKLIST.length} ticked
                             </span>
                           </div>
+                          <p className="text-xs font-semibold text-amber-900">
+                            Tick all {SAFETY_CHECKLIST.length} safety tips to open Trade Chat with {other?.full_name || 'this trader'}.
+                          </p>
                           <div className="space-y-2">
                             {SAFETY_CHECKLIST.map((tip) => {
                               const isTicked = !!proposalChecks[tip.id];
@@ -2218,7 +2420,7 @@ export default function App() {
                                   <input
                                     type="checkbox"
                                     checked={isTicked}
-                                    onChange={() => toggleSafetyCheck(p.id, tip.id)}
+                                    onChange={() => toggleSafetyCheck(p, tip.id)}
                                     className="mt-1 h-4 w-4 rounded border-slate-400 text-[#1d5fa7] focus:ring-[#1d5fa7]"
                                   />
                                   <span className={isTicked ? 'line-through text-slate-500' : ''}>{tip.text}</span>
@@ -2226,11 +2428,6 @@ export default function App() {
                               );
                             })}
                           </div>
-                          {allSafetyChecked && (
-                            <p className="text-xs font-bold text-emerald-800">
-                              ✓ All safety checks ticked — you're ready to finalize your meetup details.
-                            </p>
-                          )}
                         </div>
                       )}
 
