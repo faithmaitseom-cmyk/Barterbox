@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from './supabaseClient';
 import {
-  Search, Plus, Heart, MessageSquare, User, MapPin, ArrowLeftRight, Send, Database,
+  Search, Plus, Heart, MessageSquare, User, MapPin, ArrowLeftRight, Send,
   LogOut, Package, Briefcase, X, Check, RefreshCw, ArrowLeft, Upload, Bell, Star,
   Pencil, Trash2, Pause, Play, CheckCircle2, Settings, HelpCircle, AlertTriangle,
   MessageCircleHeart, ChevronDown, ChevronUp, ShieldCheck, FileText, Scale
@@ -49,6 +49,45 @@ const FAQ_ITEMS = [
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=80';
 const EMPTY_FORM = { title: '', description: '', type: 'good', category: 'Food & Drinks', city: 'Gaborone', looking_for: '', image_url: '' };
+
+const STARTER_LISTINGS = [
+  {
+    id: 'starter-1',
+    title: 'Homemade Seswaa (2kg Tub)',
+    description: 'Slow-cooked beef seswaa prepared fresh in Gaborone, sealed for easy sharing.',
+    type: 'good',
+    category: 'Food & Drinks',
+    city: 'Gaborone',
+    looking_for: 'Fresh farm eggs, charcoal, or household goods',
+    image_url: FALLBACK_IMG,
+    owner_id: 'starter-owner-1',
+    profiles: { full_name: 'Thabo Kgosi', city: 'Gaborone', rating: 4.9 }
+  },
+  {
+    id: 'starter-2',
+    title: 'Phone & Laptop Diagnostics',
+    description: 'Battery check, storage cleanup, and setup help for Android phones and laptops.',
+    type: 'service',
+    category: 'Electronics',
+    city: 'Gaborone',
+    looking_for: 'Power bank, chargers, or skill swap',
+    image_url: FALLBACK_IMG,
+    owner_id: 'starter-owner-2',
+    profiles: { full_name: 'Neo Ditsele', city: 'Gaborone', rating: 4.8 }
+  },
+  {
+    id: 'starter-3',
+    title: 'Potted Herbs & Garden Starters',
+    description: 'Healthy mint, basil, and aloe starters ready for home gardens in Gaborone.',
+    type: 'good',
+    category: 'Home & Garden',
+    city: 'Gaborone',
+    looking_for: 'Plant pots, garden soil, or books',
+    image_url: FALLBACK_IMG,
+    owner_id: 'starter-owner-3',
+    profiles: { full_name: 'Mpho Tau', city: 'Gaborone', rating: 5.0 }
+  }
+];
 
 const STATUS_STYLE = {
   pending: 'bg-slate-100 text-slate-700', countered: 'bg-amber-100 text-amber-800',
@@ -610,12 +649,15 @@ function PrivacyPolicyModal({ onClose, onAccept }) {
 }
 
 export default function App() {
-  const [supabaseUrl, setSupabaseUrl] = useState(() => localStorage.getItem('bb_sb_url') || '');
-  const [supabaseKey, setSupabaseKey] = useState(() => localStorage.getItem('bb_sb_key') || '');
-  const [showConfig, setShowConfig] = useState(!localStorage.getItem('bb_sb_url'));
-
   const [installPrompt, setInstallPrompt] = useState(null);
   const [showInstallModal, setShowInstallModal] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true
+    );
+  });
 
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -702,29 +744,47 @@ export default function App() {
   const setF = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   useEffect(() => {
+    const mq = window.matchMedia('(display-mode: standalone)');
+    const syncInstalledState = () => {
+      const standalone = mq.matches || window.navigator.standalone === true;
+      setIsInstalled(standalone);
+      if (standalone) {
+        setInstallPrompt(null);
+        setShowInstallModal(false);
+      }
+    };
+
     const handleBeforeInstall = (e) => {
       e.preventDefault();
       setInstallPrompt(e);
     };
+
     const handleAppInstalled = () => {
       setInstallPrompt(null);
       setShowInstallModal(false);
+      setIsInstalled(true);
     };
 
+    syncInstalledState();
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
     window.addEventListener('appinstalled', handleAppInstalled);
+    mq.addEventListener('change', syncInstalledState);
+
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
       window.removeEventListener('appinstalled', handleAppInstalled);
+      mq.removeEventListener('change', syncInstalledState);
     };
   }, []);
 
   const handleInstallClick = async () => {
+    if (isInstalled) return;
     if (installPrompt) {
       installPrompt.prompt();
       const { outcome } = await installPrompt.userChoice;
       if (outcome === 'accepted') {
         setInstallPrompt(null);
+        setIsInstalled(true);
       }
     } else {
       setShowInstallModal(true);
@@ -776,8 +836,17 @@ export default function App() {
   useEffect(() => {
     if (!supabase) return;
     fetchListings();
-    if (uid) { fetchProfile(); fetchFavorites(); fetchProposals(); fetchMyListings(); fetchNotifications(); fetchMyReviews(); }
-  }, [session]);
+  }, []);
+
+  useEffect(() => {
+    if (!supabase || !uid) return;
+    fetchProfile();
+    fetchFavorites();
+    fetchProposals();
+    fetchMyListings();
+    fetchNotifications();
+    fetchMyReviews();
+  }, [uid]);
 
   useEffect(() => {
     if (!supabase || !uid) return;
@@ -797,13 +866,6 @@ export default function App() {
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [activeProposal?.id]);
-
-  const handleSaveConfig = (e) => {
-    e.preventDefault();
-    localStorage.setItem('bb_sb_url', supabaseUrl.trim());
-    localStorage.setItem('bb_sb_key', supabaseKey.trim());
-    window.location.reload();
-  };
 
   const fetchProfile = async () => {
     const { data } = await supabase.from('profiles').select('*').eq('id', uid).single();
@@ -1181,6 +1243,10 @@ export default function App() {
   const handleSendProposal = async (e) => {
     e.preventDefault();
     if (!uid || !selectedListing) return;
+    if (String(selectedListing.id).startsWith('starter-')) {
+      alert('This is a sample listing. Sign in and post or select a live member listing to send an offer.');
+      return;
+    }
     if (!offeredListingId && !customOffer.trim()) { alert('Please select one of your listings or describe a custom offer.'); return; }
     setSubmittingProposal(true);
     const { error } = await supabase.from('trade_proposals').insert({
@@ -1255,7 +1321,9 @@ export default function App() {
     await supabase.from('notifications').update({ read: true }).eq('user_id', uid).eq('read', false);
   };
 
-  const filteredListings = useMemo(() => listings.filter((item) => {
+  const sourceListings = supabase && listings.length > 0 ? listings : STARTER_LISTINGS;
+
+  const filteredListings = useMemo(() => sourceListings.filter((item) => {
     if (activeTab === 'wishlist' && !favorites.includes(item.id)) return false;
     if (selectedCity !== 'All Cities' && item.city !== selectedCity) return false;
     if (selectedCategory !== 'All' && item.category !== selectedCategory) return false;
@@ -1265,7 +1333,7 @@ export default function App() {
       if (![item.title, item.description, item.looking_for].some((t) => t?.toLowerCase().includes(q))) return false;
     }
     return true;
-  }), [listings, activeTab, favorites, selectedCity, selectedCategory, listingTypeFilter, searchQuery]);
+  }), [sourceListings, activeTab, favorites, selectedCity, selectedCategory, listingTypeFilter, searchQuery]);
 
   const offerable = myListings.filter((l) => l.status === 'active');
   const unread = notifications.filter((n) => !n.read).length;
@@ -1282,31 +1350,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-24 font-sans">
-      <div className="bg-slate-900 text-white px-4 py-2 text-xs flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Database className="w-3.5 h-3.5 text-[#2f6fa8]" />
-          {supabase
-            ? <span className="text-emerald-400 font-medium">● Connected to Supabase</span>
-            : <span className="text-amber-300 font-medium">● Database Not Connected</span>}
-        </div>
-        <button onClick={() => setShowConfig(!showConfig)} className="underline text-[#2f6fa8] hover:text-white">
-          {showConfig ? 'Hide Keys' : 'Configure Supabase'}
-        </button>
-      </div>
-
-      {showConfig && (
-        <form onSubmit={handleSaveConfig} className="bg-slate-800 text-white p-4 border-b border-slate-700">
-          <div className="max-w-3xl mx-auto space-y-3">
-            <p className="text-xs text-slate-300">Paste your Supabase <strong>Project URL</strong> and <strong>Anon Public Key</strong>.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <input type="url" required placeholder="https://your-project.supabase.co" value={supabaseUrl} onChange={(e) => setSupabaseUrl(e.target.value)} className="px-3 py-2 rounded bg-slate-900 border border-slate-600 text-sm text-white" />
-              <input type="text" required placeholder="eyJhbGciOiJIUzI1Ni..." value={supabaseKey} onChange={(e) => setSupabaseKey(e.target.value)} className="px-3 py-2 rounded bg-slate-900 border border-slate-600 text-sm text-white" />
-            </div>
-            <button type="submit" className="bg-[#2f6fa8] hover:bg-[#2f6fa8]/90 text-white text-xs font-semibold px-4 py-2 rounded-lg">Save & Connect</button>
-          </div>
-        </form>
-      )}
-
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -1324,13 +1367,15 @@ export default function App() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleInstallClick}
-              className="text-xs font-semibold text-[#2f6fa8] bg-[#2f6fa8]/10 hover:bg-[#2f6fa8]/20 px-3 py-2 rounded-xl transition"
-            >
-              Install App
-            </button>
+            {!isInstalled && (
+              <button
+                type="button"
+                onClick={handleInstallClick}
+                className="text-xs font-semibold text-[#2f6fa8] bg-[#2f6fa8]/10 hover:bg-[#2f6fa8]/20 px-3 py-2 rounded-xl transition"
+              >
+                Install App
+              </button>
+            )}
             {uid && (
               <button onClick={() => setActiveTab('notifications')} className="relative p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700" title="Notifications">
                 <Bell className="w-5 h-5" />
@@ -1383,19 +1428,13 @@ export default function App() {
             </div>
 
             {loadError && <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-xl text-xs"><strong>Notice:</strong> {loadError}</div>}
-            {!supabase ? (
-              <div className={`${CARD} p-8 text-center space-y-2`}>
-                <Database className="w-8 h-8 text-[#2f6fa8] mx-auto" />
-                <h3 className="font-semibold text-slate-800">Connect Your Supabase Backend</h3>
-                <p className="text-sm text-slate-500 max-w-md mx-auto">Enter your Project URL and Anon Key in the top banner.</p>
-              </div>
-            ) : loadingData ? (
+            {loadingData && listings.length === 0 ? (
               <div className="text-center py-12 text-sm text-slate-500">Loading Botswana marketplace...</div>
             ) : filteredListings.length === 0 ? (
               <div className={`${CARD} p-10 text-center space-y-2`}>
                 <Package className="w-8 h-8 text-slate-400 mx-auto" />
-                <p className="font-medium text-slate-700">No listings found</p>
-                <p className="text-xs text-slate-500">Try clearing filters or be the first to post an item!</p>
+                <p className="font-medium text-slate-700">No listings match your filter</p>
+                <p className="text-xs text-slate-500">Try clearing filters or post an item to start trading!</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1883,7 +1922,7 @@ export default function App() {
         )}
       </main>
 
-      {showInstallModal && (
+      {showInstallModal && !isInstalled && (
         <Modal onClose={() => setShowInstallModal(false)} className="max-w-md">
           <div className="p-5 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
