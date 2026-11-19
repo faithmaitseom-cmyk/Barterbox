@@ -81,7 +81,7 @@ const STARTER_LISTINGS = [
     looking_for: 'Fresh farm eggs, charcoal, or household goods',
     image_url: FALLBACK_IMG,
     owner_id: 'starter-owner-1',
-    profiles: { full_name: 'Thabo Kgosi', city: 'Gaborone', rating: 4.9 }
+    profiles: { full_name: 'Thabo Kgosi', username: 'thabo_bw', city: 'Gaborone', rating: 4.9, rating_count: 12 }
   },
   {
     id: 'starter-2',
@@ -94,7 +94,7 @@ const STARTER_LISTINGS = [
     looking_for: 'Power bank, chargers, or skill swap',
     image_url: FALLBACK_IMG,
     owner_id: 'starter-owner-2',
-    profiles: { full_name: 'Neo Ditsele', city: 'Gaborone', rating: 4.8 }
+    profiles: { full_name: 'Neo Ditsele', username: 'neo_tech', city: 'Gaborone', rating: 4.8, rating_count: 8 }
   },
   {
     id: 'starter-3',
@@ -107,7 +107,7 @@ const STARTER_LISTINGS = [
     looking_for: 'Plant pots, garden soil, or books',
     image_url: FALLBACK_IMG,
     owner_id: 'starter-owner-3',
-    profiles: { full_name: 'Mpho Tau', city: 'Gaborone', rating: 5.0 }
+    profiles: { full_name: 'Mpho Tau', username: 'mpho_gardens', city: 'Gaborone', rating: 5.0, rating_count: 15 }
   }
 ];
 
@@ -946,14 +946,18 @@ export default function App() {
   };
 
   const openMemberProfile = async (ownerId, fallbackInfo = {}) => {
-    if (!ownerId) return;
+    setSelectedListing(null);
+
+    if (!ownerId) {
+      setActiveTab('explore');
+      return;
+    }
+
     if (uid && ownerId === uid) {
-      setSelectedListing(null);
       setActiveTab('profile');
       return;
     }
 
-    setSelectedListing(null);
     if (activeTab !== 'memberProfile') {
       setPreviousTab(activeTab);
     }
@@ -972,9 +976,8 @@ export default function App() {
     setActiveTab('memberProfile');
     setLoadingMemberProfile(true);
 
-    const localMatchingListings = (listings.length > 0 ? listings : STARTER_LISTINGS).filter(
-      (item) => item.owner_id === ownerId
-    );
+    const pool = listings.length > 0 ? listings : STARTER_LISTINGS;
+    const localMatchingListings = pool.filter((item) => item.owner_id === ownerId);
     setViewedMemberListings(localMatchingListings);
     setViewedMemberReviews([]);
 
@@ -1924,7 +1927,7 @@ export default function App() {
         {activeTab === 'memberProfile' && viewedMember && (
           <div className="space-y-5 max-w-4xl mx-auto">
             <div className="flex items-center justify-between gap-2">
-              <button onClick={() => setActiveTab(previousTab || 'explore')} className={BACK_BTN}>
+              <button type="button" onClick={() => setActiveTab(previousTab || 'explore')} className={BACK_BTN}>
                 <ArrowLeft className="w-4 h-4" /> Back to Listings
               </button>
             </div>
@@ -2882,6 +2885,7 @@ export default function App() {
 
       {selectedListing && (() => {
         const posterName = selectedListing.profiles?.full_name || 'Member';
+        const posterId = selectedListing.owner_id || selectedListing.user_id || '';
         return (
           <Modal onClose={() => setSelectedListing(null)} className="max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="relative h-52 bg-slate-200">
@@ -2901,11 +2905,15 @@ export default function App() {
                     <span>Posted by</span>
                     <button
                       type="button"
-                      onClick={() => openMemberProfile(selectedListing.owner_id, {
-                        ...(selectedListing.profiles || {}),
-                        full_name: posterName,
-                        city: selectedListing.profiles?.city || selectedListing.city
-                      })}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        openMemberProfile(posterId, {
+                          ...(selectedListing.profiles || {}),
+                          full_name: posterName,
+                          city: selectedListing.profiles?.city || selectedListing.city
+                        });
+                      }}
                       className="text-[#1d5fa7] hover:text-[#14467c] bg-sky-50 hover:bg-sky-100 border border-sky-200 px-2 py-0.5 rounded-lg font-extrabold underline decoration-2 underline-offset-2 transition cursor-pointer"
                     >
                       {posterName}
