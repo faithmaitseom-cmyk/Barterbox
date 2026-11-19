@@ -4,7 +4,7 @@ import {
   Search, Plus, Heart, MessageSquare, User, MapPin, ArrowLeftRight, Send,
   LogOut, Package, Briefcase, X, Check, RefreshCw, ArrowLeft, Upload, Bell, Star,
   Pencil, Trash2, Pause, Play, CheckCircle2, Settings, HelpCircle, AlertTriangle,
-  MessageCircleHeart, ChevronDown, ChevronUp, ShieldCheck, FileText, Scale, Sparkles, WifiOff
+  MessageCircleHeart, ChevronDown, ChevronUp, ShieldCheck, FileText, Scale, Sparkles, WifiOff, Inbox
 } from 'lucide-react';
 
 const SUPPORT_EMAIL = 'barterboxsupport@gmail.com';
@@ -138,6 +138,7 @@ const CARD = 'bg-white border border-slate-200/90 rounded-2xl shadow-sm hover:sh
 const SM = 'text-sm font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-xs active:scale-[0.99] transition-all';
 
 const ago = (d) => {
+  if (!d) return '';
   const s = (Date.now() - new Date(d)) / 1000;
   if (s < 60) return 'just now';
   if (s < 3600) return `${Math.floor(s / 60)}m ago`;
@@ -716,6 +717,12 @@ export default function App() {
   const [recoveryFeedback, setRecoveryFeedback] = useState('');
 
   const [activeTab, setActiveTab] = useState('explore');
+  const [previousTab, setPreviousTab] = useState('explore');
+  const [viewedMember, setViewedMember] = useState(null);
+  const [viewedMemberListings, setViewedMemberListings] = useState([]);
+  const [viewedMemberReviews, setViewedMemberReviews] = useState([]);
+  const [loadingMemberProfile, setLoadingMemberProfile] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCity, setSelectedCity] = useState('All Cities');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -746,6 +753,7 @@ export default function App() {
   const [myListings, setMyListings] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [proposals, setProposals] = useState([]);
+  const [chatPreviews, setChatPreviews] = useState({});
   const [notifications, setNotifications] = useState([]);
   const [myReviews, setMyReviews] = useState([]);
   const [loadingData, setLoadingData] = useState(false);
@@ -868,6 +876,7 @@ export default function App() {
         setProfile(null);
         setFavorites([]);
         setProposals([]);
+        setChatPreviews({});
         setMyListings([]);
         setNotifications([]);
         setMyReviews([]);
@@ -906,10 +915,125 @@ export default function App() {
     const id = activeProposal.id;
     const ch = supabase.channel('bb-chat-' + id)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `proposal_id=eq.${id}` },
-        () => loadMessages(id))
+        () => { loadMessages(id); fetchChatPreviews(proposals); })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [activeProposal?.id]);
+  }, [activeProposal?.id, proposals]);
+
+  const fetchChatPreviews = async (proposalList) => {
+    if (!supabase || !Array.isArray(proposalList) || proposalList.length === 0) {
+      setChatPreviews({});
+      return;
+    }
+    const ids = proposalList.map((p) => p.id).filter(Boolean);
+    if (ids.length === 0) return;
+
+    const { data, error } = await supabase
+      .from('messages')
+      .select('id, proposal_id, sender_id, content, created_at')
+      .in('proposal_id', ids)
+      .order('created_at', { ascending: false });
+
+    if (error || !data) return;
+
+    const latestByProposal = {};
+    for (const msg of data) {
+      if (!latestByProposal[msg.proposal_id]) {
+        latestByProposal[msg.proposal_id] = msg;
+      }
+    }
+    setChatPreviews(latestByProposal);
+  };
+
+  const openMemberProfile = async (ownerId, fallbackInfo = {}) => {
+    if (!ownerId) return;
+    if (uid && ownerId === uid) {
+      setSelectedListing(null);
+      setActiveTab('profile');
+      return;
+    }
+
+    setSelectedListing(null);
+    if (activeTab !== 'memberProfile') {
+      setPreviousTab(activeTab);
+    }
+
+    const baseMember = {
+      id: ownerId,
+      full_name: fallbackInfo.full_name || 'BarterBox Member',
+      city: fallbackInfo.city || 'Botswana',
+      avatar_url: fallbackInfo.avatar_url || null,
+      username: fallbackInfo.username || null,
+      rating_avg: Number(fallbackInfo.rating_avg ?? fallbackInfo.rating ?? 0) || 0,
+      rating_count: Number(fallbackInfo.rating_count ?? 0) || 0
+    };
+
+    setViewedMember(baseMember);
+    setActiveTab('memberProfile');
+    setLoadingMemberProfile(true);
+
+    const localMatchingListings = (listings.length > 0 ? listings : STARTER_LISTINGS).filter(
+      (item) => item.owner_id === ownerId
+    );
+    setViewedMemberListings(localMatchingListings);
+    setViewedMemberReviews([]);
+
+    if (!supabase || String(ownerId).startsWith('starter-')) {
+      setLoadingMemberProfile(false);
+      return;
+    }
+
+    const [profileRes, memberListingsRes, reviewsRes] = await Promise.all([
+      supabase.from('profiles').select('*').eq('id', ownerId).maybeSingle(),
+      supabase
+        .from('listings')
+        .select('*, profiles(full_name, city, avatar_url, rating)')
+        .eq('owner_id', ownerId)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('reviews')
+        .select('*')
+        .eq('reviewee_id', ownerId)
+        .order('created_at', { ascending: false })
+        .limit(15)
+    ]);
+
+    if (profileRes?.data) {
+      setViewedMember((prev) => ({
+        ...prev,
+        ...profileRes.data,
+        rating_avg: Number(profileRes.data.rating_avg ?? profileRes.data.rating ?? prev?.rating_avg ?? 0) || 0,
+        rating_count: Number(profileRes.data.rating_count ?? prev?.rating_count ?? 0) || 0
+      }));
+    }
+
+    if (!memberListingsRes?.error && memberListingsRes?.data) {
+      setViewedMemberListings(memberListingsRes.data);
+    }
+
+    if (!reviewsRes?.error && reviewsRes?.data && reviewsRes.data.length > 0) {
+      const reviewerIds = [...new Set(reviewsRes.data.map((r) => r.reviewer_id).filter(Boolean))];
+      let reviewerMap = {};
+      if (reviewerIds.length > 0) {
+        const { data: reviewersData } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', reviewerIds);
+        if (reviewersData) {
+          reviewerMap = Object.fromEntries(reviewersData.map((rv) => [rv.id, rv.full_name]));
+        }
+      }
+      setViewedMemberReviews(
+        reviewsRes.data.map((rev) => ({
+          ...rev,
+          reviewer: { full_name: reviewerMap[rev.reviewer_id] || 'Member' }
+        }))
+      );
+    }
+
+    setLoadingMemberProfile(false);
+  };
 
   const fetchProfile = async () => {
     const { data } = await supabase.from('profiles').select('*').eq('id', uid).single();
@@ -1098,6 +1222,7 @@ export default function App() {
 
     if (!error && richData) {
       setProposals(richData);
+      fetchChatPreviews(richData);
       return;
     }
 
@@ -1133,17 +1258,18 @@ export default function App() {
     const profileById = Object.fromEntries((profilesRes.data || []).map((pr) => [pr.id, pr]));
     const listingById = Object.fromEntries((listingsRes.data || []).map((li) => [li.id, li]));
 
-    setProposals(
-      baseRows.map((p) => ({
-        ...p,
-        sender: profileById[p.sender_id] || null,
-        receiver: profileById[p.receiver_id] || null,
-        target_listing: listingById[p.target_listing_id] || null,
-        offered_listing: p.offered_listing_id ? listingById[p.offered_listing_id] || null : null,
-        completion: p.completion || [],
-        reviews: p.reviews || []
-      }))
-    );
+    const hydrated = baseRows.map((p) => ({
+      ...p,
+      sender: profileById[p.sender_id] || null,
+      receiver: profileById[p.receiver_id] || null,
+      target_listing: listingById[p.target_listing_id] || null,
+      offered_listing: p.offered_listing_id ? listingById[p.offered_listing_id] || null : null,
+      completion: p.completion || [],
+      reviews: p.reviews || []
+    }));
+
+    setProposals(hydrated);
+    fetchChatPreviews(hydrated);
   };
 
   const fetchNotifications = async () => {
@@ -1202,7 +1328,13 @@ export default function App() {
   const loadMessages = async (proposalId) => {
     const { data } = await supabase.from('messages').select('*, profiles(full_name)')
       .eq('proposal_id', proposalId).order('created_at', { ascending: true });
-    if (data) setMessages(data);
+    if (data) {
+      setMessages(data);
+      if (data.length > 0) {
+        const latest = data[data.length - 1];
+        setChatPreviews((prev) => ({ ...prev, [proposalId]: latest }));
+      }
+    }
   };
 
   const refreshAll = () => { fetchListings(); fetchMyListings(); fetchProposals(); };
@@ -1311,7 +1443,17 @@ export default function App() {
     setUploadingImage(false);
   };
 
-  const openCreate = () => { setEditingId(null); setForm(EMPTY_FORM); setListingError(''); setShowListingModal(true); };
+  const openCreate = () => {
+    if (!uid) {
+      setActiveTab('profile');
+      return;
+    }
+    setEditingId(null);
+    setForm(EMPTY_FORM);
+    setListingError('');
+    setShowListingModal(true);
+  };
+
   const openEdit = (l) => {
     if (!canEditListing(l)) {
       setLoadError('Listings can only be edited within 1 hour of posting. Delete this listing and post a new one instead.');
@@ -1469,7 +1611,10 @@ export default function App() {
     setNewMessage('');
     const { error } = await supabase.from('messages').insert({ proposal_id: activeProposal.id, sender_id: uid, content: text });
     if (error) alert(error.message);
-    else loadMessages(activeProposal.id);
+    else {
+      await loadMessages(activeProposal.id);
+      fetchChatPreviews(proposals);
+    }
   };
 
   const markRead = async (n) => {
@@ -1507,12 +1652,28 @@ export default function App() {
     (p.status === 'pending' && p.receiver_id === uid) || (p.status === 'countered' && p.sender_id === uid)).length;
   const visibleTrades = proposals.filter((p) => TRADE_FILTERS[tradeFilter].statuses.includes(p.status));
 
-  const navItems = [
-    { id: 'explore', label: 'Explore', Icon: Search },
-    { id: 'wishlist', label: 'Wishlist', Icon: Heart },
-    { id: 'trades', label: 'Trades', Icon: ArrowLeftRight },
-    { id: 'profile', label: uid ? 'Profile' : 'Sign In', Icon: User }
-  ];
+  const sortedChats = useMemo(() => {
+    return [...proposals].sort((a, b) => {
+      const aTime = new Date(chatPreviews[a.id]?.created_at || a.updated_at || a.created_at || 0).getTime();
+      const bTime = new Date(chatPreviews[b.id]?.created_at || b.updated_at || b.created_at || 0).getTime();
+      return bTime - aTime;
+    });
+  }, [proposals, chatPreviews]);
+
+  const memberRatingDisplay = useMemo(() => {
+    if (!viewedMember) return { avg: 0, count: 0 };
+    if (viewedMemberReviews.length > 0) {
+      const total = viewedMemberReviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0);
+      return {
+        avg: total / viewedMemberReviews.length,
+        count: viewedMemberReviews.length
+      };
+    }
+    return {
+      avg: Number(viewedMember.rating_avg ?? viewedMember.rating ?? 0) || 0,
+      count: Number(viewedMember.rating_count ?? 0) || 0
+    };
+  }, [viewedMember, viewedMemberReviews]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50/80 via-slate-100 to-amber-50/40 text-slate-950 pb-24 text-base">
@@ -1520,7 +1681,11 @@ export default function App() {
         <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
             {activeTab !== 'explore' && (
-              <button onClick={() => setActiveTab('explore')} className={BACK_BTN} title="Back to Dashboard">
+              <button
+                onClick={() => setActiveTab(activeTab === 'memberProfile' ? previousTab || 'explore' : 'explore')}
+                className={BACK_BTN}
+                title={activeTab === 'memberProfile' ? 'Back' : 'Back to Dashboard'}
+              >
                 <ArrowLeft className="w-4 h-4" />
               </button>
             )}
@@ -1547,16 +1712,41 @@ export default function App() {
                 Install App
               </button>
             )}
-            {uid && (
-              <button onClick={() => setActiveTab('notifications')} className="relative p-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800" title="Notifications">
-                <Bell className="w-5 h-5" />
-                {unread > 0 && <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[11px] font-bold flex items-center justify-center">{unread > 9 ? '9+' : unread}</span>}
-              </button>
-            )}
             {uid ? (
-              <button onClick={openCreate} className={`${PRIMARY} px-3.5 py-2 flex items-center gap-1.5`}>
-                <Plus className="w-4 h-4 stroke-[2.5]" /><span>Post Item</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('messages')}
+                  className={`relative p-2 rounded-xl border text-slate-800 transition ${
+                    activeTab === 'messages'
+                      ? 'bg-sky-100 border-sky-300 text-[#1d5fa7]'
+                      : 'bg-slate-100 hover:bg-slate-200 border-slate-200'
+                  }`}
+                  title="Messages"
+                  aria-label="Messages"
+                >
+                  <Inbox className="w-5 h-5" />
+                  {proposals.length > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#1d5fa7] text-white text-[10px] font-extrabold flex items-center justify-center">
+                      {proposals.length > 9 ? '9+' : proposals.length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('notifications')}
+                  className={`relative p-2 rounded-xl border text-slate-800 transition ${
+                    activeTab === 'notifications'
+                      ? 'bg-sky-100 border-sky-300 text-[#1d5fa7]'
+                      : 'bg-slate-100 hover:bg-slate-200 border-slate-200'
+                  }`}
+                  title="Notifications"
+                  aria-label="Notifications"
+                >
+                  <Bell className="w-5 h-5" />
+                  {unread > 0 && <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[11px] font-bold flex items-center justify-center">{unread > 9 ? '9+' : unread}</span>}
+                </button>
+              </>
             ) : (
               <button onClick={() => setActiveTab('profile')} className="bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold px-3.5 py-2 rounded-xl shadow-xs transition-all">Sign In</button>
             )}
@@ -1724,6 +1914,207 @@ export default function App() {
                         </div>
                       </div>
                     </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'memberProfile' && viewedMember && (
+          <div className="space-y-5 max-w-4xl mx-auto">
+            <div className="flex items-center justify-between gap-2">
+              <button onClick={() => setActiveTab(previousTab || 'explore')} className={BACK_BTN}>
+                <ArrowLeft className="w-4 h-4" /> Back to Listings
+              </button>
+            </div>
+
+            <div className={`${CARD} p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4`}>
+              <div className="flex items-center gap-4 min-w-0">
+                <img
+                  src={viewedMember.avatar_url || '/icon-192.png'}
+                  alt={viewedMember.full_name || 'Member avatar'}
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border border-sky-200 bg-slate-100 shrink-0"
+                />
+                <div className="min-w-0 space-y-1">
+                  <h2 className="font-extrabold text-2xl text-slate-950 truncate">
+                    {viewedMember.full_name || 'BarterBox Member'}
+                  </h2>
+                  {viewedMember.username && (
+                    <p className="text-sm font-bold text-[#1d5fa7] truncate">@{viewedMember.username}</p>
+                  )}
+                  <p className="text-sm font-semibold text-slate-600 flex items-center gap-1">
+                    <MapPin className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>{viewedMember.city || 'Botswana'}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 flex items-center gap-3 shrink-0">
+                <Star className="w-7 h-7 fill-amber-400 text-amber-500 shrink-0" />
+                <div>
+                  <p className="font-black text-xl text-slate-950 leading-none">
+                    {memberRatingDisplay.count > 0 ? memberRatingDisplay.avg.toFixed(1) : 'New'}
+                    <span className="text-xs font-bold text-slate-600"> / 5.0</span>
+                  </p>
+                  <p className="text-xs font-bold text-amber-950 mt-1">
+                    {memberRatingDisplay.count > 0
+                      ? `${memberRatingDisplay.count} review${memberRatingDisplay.count > 1 ? 's' : ''}`
+                      : 'No ratings yet'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="font-extrabold text-xl text-slate-950">
+                Active Listings by {viewedMember.full_name || 'Member'} ({viewedMemberListings.length})
+              </h3>
+              {loadingMemberProfile && viewedMemberListings.length === 0 ? (
+                <div className={`${CARD} p-8 text-center text-sm font-semibold text-slate-600`}>
+                  Loading member listings...
+                </div>
+              ) : viewedMemberListings.length === 0 ? (
+                <div className={`${CARD} p-8 text-center text-sm font-medium text-slate-600`}>
+                  This member has no active listings right now.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {viewedMemberListings.map((item) => {
+                    const cond = item.condition || 'Good';
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => setSelectedListing(item)}
+                        className={`${CARD} overflow-hidden hover:-translate-y-0.5 transition-all cursor-pointer flex flex-col`}
+                      >
+                        <div className="relative h-40 bg-slate-200 border-b border-slate-100">
+                          <img src={item.image_url || FALLBACK_IMG} alt={item.title} className="w-full h-full object-cover" />
+                          <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                            <span className={`text-xs font-extrabold px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-xs ${
+                              item.type === 'service'
+                                ? 'bg-amber-200 text-slate-950 border border-amber-300'
+                                : 'bg-sky-600 text-white'
+                            }`}>
+                              {item.type === 'service' ? <Briefcase className="w-3.5 h-3.5" /> : <Package className="w-3.5 h-3.5" />}
+                              {item.type === 'service' ? 'Service' : 'Good'}
+                            </span>
+                            <span className={`text-xs font-extrabold px-2.5 py-1 rounded-lg border shadow-xs ${CONDITION_BADGE[cond] || CONDITION_BADGE.Good}`}>
+                              {cond}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="p-4 flex-1 flex flex-col justify-between space-y-2.5">
+                          <div>
+                            <div className="flex items-center gap-1 text-xs font-bold text-slate-600 mb-1">
+                              <MapPin className="w-3.5 h-3.5 text-rose-600" />
+                              <span>{item.city}</span>
+                              <span>•</span>
+                              <span className="text-[#1d5fa7] truncate">{item.category}</span>
+                            </div>
+                            <h4 className="font-extrabold text-base text-slate-950 line-clamp-1">{item.title}</h4>
+                            <p className="text-sm text-slate-700 line-clamp-2 mt-1">{item.description}</p>
+                          </div>
+                          <div className="bg-sky-50/90 border border-sky-200/80 rounded-xl p-2">
+                            <span className="text-[10px] uppercase tracking-wider font-extrabold text-[#1d5fa7] block">Looking For:</span>
+                            <p className="text-xs font-bold text-slate-900 line-clamp-1">{item.looking_for || 'Open to fair barter offers'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className={`${CARD} p-5 space-y-3`}>
+              <h3 className="font-extrabold text-base text-slate-950">
+                Trader Reviews & Ratings ({viewedMemberReviews.length})
+              </h3>
+              {viewedMemberReviews.length === 0 ? (
+                <p className="text-sm text-slate-600">
+                  {memberRatingDisplay.count > 0
+                    ? `Rated ${memberRatingDisplay.avg.toFixed(1)} across ${memberRatingDisplay.count} completed trade${memberRatingDisplay.count > 1 ? 's' : ''}.`
+                    : 'No written reviews yet for this member.'}
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {viewedMemberReviews.map((r) => (
+                    <div key={r.id} className="text-sm border-b border-slate-100 pb-2.5 last:border-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-bold text-slate-900">{r.reviewer?.full_name || 'Member'}</span>
+                        <span className="text-amber-500 font-bold">
+                          {'★'.repeat(Number(r.rating) || 0)}
+                          <span className="text-slate-300">{'★'.repeat(Math.max(0, 5 - (Number(r.rating) || 0)))}</span>
+                        </span>
+                      </div>
+                      {r.comment && <p className="text-slate-700 mt-1">{r.comment}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'messages' && (
+          <div className="space-y-4 max-w-2xl mx-auto">
+            <div className="flex items-center justify-between">
+              <h2 className="font-extrabold text-2xl text-slate-950">Messages</h2>
+              {uid && (
+                <button onClick={() => fetchProposals()} className={BACK_BTN}>
+                  <RefreshCw className="w-4 h-4" /> Refresh
+                </button>
+              )}
+            </div>
+            {!uid ? (
+              <div className={`${CARD} p-8 text-center space-y-3`}>
+                <p className="text-base font-medium text-slate-700">Sign in to view all your trade chats and messages.</p>
+                <button onClick={() => setActiveTab('profile')} className={`${PRIMARY} px-6 py-2.5`}>Go to Sign In</button>
+              </div>
+            ) : sortedChats.length === 0 ? (
+              <div className={`${CARD} p-8 text-center space-y-3`}>
+                <MessageSquare className="w-9 h-9 text-[#1d5fa7] mx-auto" />
+                <p className="font-extrabold text-lg text-slate-900">No trade chats yet</p>
+                <p className="text-sm text-slate-600">Send or receive a barter proposal on a listing to start a conversation.</p>
+                <button onClick={() => setActiveTab('explore')} className={`${PRIMARY} px-5 py-2.5`}>Browse Marketplace</button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {sortedChats.map((p) => {
+                  const amSender = p.sender_id === uid;
+                  const partner = amSender ? p.receiver : p.sender;
+                  const latestMsg = chatPreviews[p.id];
+                  const timestamp = latestMsg?.created_at || p.updated_at || p.created_at;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => openChat(p)}
+                      className={`${CARD} w-full text-left p-4 hover:border-sky-300 flex items-center justify-between gap-3`}
+                    >
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-extrabold text-base text-slate-950 truncate">
+                            {partner?.full_name || 'BarterBox Member'}
+                          </span>
+                          <span className="text-xs font-semibold text-slate-500 shrink-0">
+                            {ago(timestamp)}
+                          </span>
+                        </div>
+                        <p className="text-xs font-bold text-[#1d5fa7] truncate">
+                          Trade: {p.target_listing?.title || 'Listing'} ↔ {p.offered_listing?.title || p.custom_offer || 'Offer'}
+                        </p>
+                        <p className="text-sm text-slate-700 truncate">
+                          {latestMsg
+                            ? `${latestMsg.sender_id === uid ? 'You: ' : ''}${latestMsg.content}`
+                            : 'Tap to open Trade Chat and coordinate your swap.'}
+                        </p>
+                      </div>
+                      <span className={`${SM} bg-[#1d5fa7] text-white shrink-0`}>
+                        <MessageSquare className="w-4 h-4" /> Chat
+                      </span>
+                    </button>
                   );
                 })}
               </div>
@@ -2489,61 +2880,79 @@ export default function App() {
         </Modal>
       )}
 
-      {selectedListing && (
-        <Modal onClose={() => setSelectedListing(null)} className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <div className="relative h-52 bg-slate-200">
-            <img src={selectedListing.image_url || FALLBACK_IMG} alt={selectedListing.title} className="w-full h-full object-cover rounded-t-2xl" />
-            <button onClick={() => setSelectedListing(null)} className="absolute top-3 right-3 bg-white/95 border border-slate-200 p-1.5 rounded-full shadow-xs hover:bg-white"><X className="w-5 h-5" /></button>
-          </div>
-          <div className="p-5 space-y-4">
-            <div>
-              <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-bold text-slate-600">
-                <span className="bg-sky-100 text-[#1d5fa7] font-extrabold px-2.5 py-0.5 rounded-full uppercase">{selectedListing.type}</span>
-                <span className={`font-extrabold px-2.5 py-0.5 rounded-full border ${CONDITION_BADGE[selectedListing.condition || 'Good'] || CONDITION_BADGE.Good}`}>
-                  Condition: {selectedListing.condition || 'Good'}
-                </span>
-                <span>{selectedListing.city}</span><span>•</span><span>Posted by {selectedListing.profiles?.full_name || 'Member'}</span>
-                {Number(selectedListing.profiles?.rating) > 0 && <span className="flex items-center gap-0.5 text-amber-700 font-bold"><Star className="w-4 h-4 fill-amber-400 text-amber-500" />{Number(selectedListing.profiles.rating).toFixed(1)}</span>}
-              </div>
-              <h2 className="font-extrabold text-2xl text-slate-950 mt-1.5">{selectedListing.title}</h2>
-              <p className="text-base text-slate-700 mt-1.5 leading-relaxed">{selectedListing.description}</p>
+      {selectedListing && (() => {
+        const posterName = selectedListing.profiles?.full_name || 'Member';
+        return (
+          <Modal onClose={() => setSelectedListing(null)} className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="relative h-52 bg-slate-200">
+              <img src={selectedListing.image_url || FALLBACK_IMG} alt={selectedListing.title} className="w-full h-full object-cover rounded-t-2xl" />
+              <button onClick={() => setSelectedListing(null)} className="absolute top-3 right-3 bg-white/95 border border-slate-200 p-1.5 rounded-full shadow-xs hover:bg-white"><X className="w-5 h-5" /></button>
             </div>
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5">
-              <span className="text-xs uppercase font-extrabold text-amber-950 block">Owner is looking for:</span>
-              <p className="text-base font-bold text-slate-900 mt-0.5">{selectedListing.looking_for || 'Open to offers'}</p>
-            </div>
-            {uid === selectedListing.owner_id ? (
-              <p className="text-sm font-semibold text-center text-slate-600 bg-slate-100 py-2.5 rounded-xl">This is your own listing.</p>
-            ) : !uid ? (
-              <button onClick={() => { setSelectedListing(null); setActiveTab('profile'); }} className={`w-full ${PRIMARY} py-2.5`}>Sign In to Propose a Trade</button>
-            ) : (
-              <form onSubmit={handleSendProposal} className="space-y-3 border-t border-slate-100 pt-4">
-                <h3 className="font-extrabold text-base text-slate-950">Propose a Barter Offer</h3>
-                {offerable.length > 0 && (
-                  <div>
-                    <label className={LABEL}>Offer one of your listed items:</label>
-                    <select value={offeredListingId} onChange={(e) => setOfferedListingId(e.target.value)} className={INPUT}>
-                      <option value="">-- Select your item/service (optional) --</option>
-                      {offerable.map((ml) => (
-                        <option key={ml.id} value={ml.id}>
-                          {ml.title} ({ml.condition || 'Good'})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-                <div>
-                  <label className={LABEL}>Or describe a custom trade / skill offer:</label>
-                  <textarea rows={2} placeholder="e.g. I can trade my Samsung tablet or 2 days of tiling work..." value={customOffer} onChange={(e) => setCustomOffer(e.target.value)} className={INPUT} />
+            <div className="p-5 space-y-4">
+              <div>
+                <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-bold text-slate-600">
+                  <span className="bg-sky-100 text-[#1d5fa7] font-extrabold px-2.5 py-0.5 rounded-full uppercase">{selectedListing.type}</span>
+                  <span className={`font-extrabold px-2.5 py-0.5 rounded-full border ${CONDITION_BADGE[selectedListing.condition || 'Good'] || CONDITION_BADGE.Good}`}>
+                    Condition: {selectedListing.condition || 'Good'}
+                  </span>
+                  <span>{selectedListing.city}</span>
+                  <span>•</span>
+                  <span className="inline-flex items-center gap-1 text-slate-700">
+                    <span>Posted by</span>
+                    <button
+                      type="button"
+                      onClick={() => openMemberProfile(selectedListing.owner_id, {
+                        ...(selectedListing.profiles || {}),
+                        full_name: posterName,
+                        city: selectedListing.profiles?.city || selectedListing.city
+                      })}
+                      className="text-[#1d5fa7] hover:text-[#14467c] bg-sky-50 hover:bg-sky-100 border border-sky-200 px-2 py-0.5 rounded-lg font-extrabold underline decoration-2 underline-offset-2 transition cursor-pointer"
+                    >
+                      {posterName}
+                    </button>
+                  </span>
+                  {Number(selectedListing.profiles?.rating) > 0 && <span className="flex items-center gap-0.5 text-amber-700 font-bold"><Star className="w-4 h-4 fill-amber-400 text-amber-500" />{Number(selectedListing.profiles.rating).toFixed(1)}</span>}
                 </div>
-                <button type="submit" disabled={submittingProposal} className={`w-full ${PRIMARY} py-2.5 flex items-center justify-center gap-2 disabled:opacity-50`}>
-                  <ArrowLeftRight className="w-4 h-4" />{submittingProposal ? 'Sending Offer...' : 'Send Barter Proposal'}
-                </button>
-              </form>
-            )}
-          </div>
-        </Modal>
-      )}
+                <h2 className="font-extrabold text-2xl text-slate-950 mt-1.5">{selectedListing.title}</h2>
+                <p className="text-base text-slate-700 mt-1.5 leading-relaxed">{selectedListing.description}</p>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5">
+                <span className="text-xs uppercase font-extrabold text-amber-950 block">Owner is looking for:</span>
+                <p className="text-base font-bold text-slate-900 mt-0.5">{selectedListing.looking_for || 'Open to offers'}</p>
+              </div>
+              {uid === selectedListing.owner_id ? (
+                <p className="text-sm font-semibold text-center text-slate-600 bg-slate-100 py-2.5 rounded-xl">This is your own listing.</p>
+              ) : !uid ? (
+                <button onClick={() => { setSelectedListing(null); setActiveTab('profile'); }} className={`w-full ${PRIMARY} py-2.5`}>Sign In to Propose a Trade</button>
+              ) : (
+                <form onSubmit={handleSendProposal} className="space-y-3 border-t border-slate-100 pt-4">
+                  <h3 className="font-extrabold text-base text-slate-950">Propose a Barter Offer</h3>
+                  {offerable.length > 0 && (
+                    <div>
+                      <label className={LABEL}>Offer one of your listed items:</label>
+                      <select value={offeredListingId} onChange={(e) => setOfferedListingId(e.target.value)} className={INPUT}>
+                        <option value="">-- Select your item/service (optional) --</option>
+                        {offerable.map((ml) => (
+                          <option key={ml.id} value={ml.id}>
+                            {ml.title} ({ml.condition || 'Good'})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  <div>
+                    <label className={LABEL}>Or describe a custom trade / skill offer:</label>
+                    <textarea rows={2} placeholder="e.g. I can trade my Samsung tablet or 2 days of tiling work..." value={customOffer} onChange={(e) => setCustomOffer(e.target.value)} className={INPUT} />
+                  </div>
+                  <button type="submit" disabled={submittingProposal} className={`w-full ${PRIMARY} py-2.5 flex items-center justify-center gap-2 disabled:opacity-50`}>
+                    <ArrowLeftRight className="w-4 h-4" />{submittingProposal ? 'Sending Offer...' : 'Send Barter Proposal'}
+                  </button>
+                </form>
+              )}
+            </div>
+          </Modal>
+        );
+      })()}
 
       {showListingModal && (
         <Modal onClose={() => setShowListingModal(false)} className="max-w-md max-h-[90vh] overflow-y-auto">
@@ -2676,25 +3085,69 @@ export default function App() {
       )}
 
       <nav className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t border-slate-200 z-40 shadow-sm">
-        <div className="max-w-md mx-auto flex justify-around py-1.5">
-          {navItems.map(({ id, label, Icon }) => {
-            const active = activeTab === id;
-            return (
-              <button
-                key={id}
-                onClick={() => setActiveTab(id)}
-                className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-xs font-bold relative transition-all ${
-                  active
-                    ? 'text-[#1d5fa7] bg-sky-50'
-                    : 'text-slate-600 hover:text-slate-950'
-                }`}
-              >
-                <Icon className={`w-5 h-5 ${active ? 'stroke-[2.4]' : ''}`} />
-                <span>{label}</span>
-                {id === 'trades' && needsAction > 0 && <span className="w-2 h-2 rounded-full bg-rose-600 absolute top-1 right-2.5" />}
-              </button>
-            );
-          })}
+        <div className="max-w-md mx-auto flex items-end justify-around py-1.5 px-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab('explore')}
+            className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-xs font-bold relative transition-all ${
+              activeTab === 'explore' || activeTab === 'memberProfile'
+                ? 'text-[#1d5fa7] bg-sky-50'
+                : 'text-slate-600 hover:text-slate-950'
+            }`}
+          >
+            <Search className={`w-5 h-5 ${activeTab === 'explore' || activeTab === 'memberProfile' ? 'stroke-[2.4]' : ''}`} />
+            <span>Explore</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('wishlist')}
+            className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-xs font-bold relative transition-all ${
+              activeTab === 'wishlist'
+                ? 'text-[#1d5fa7] bg-sky-50'
+                : 'text-slate-600 hover:text-slate-950'
+            }`}
+          >
+            <Heart className={`w-5 h-5 ${activeTab === 'wishlist' ? 'stroke-[2.4]' : ''}`} />
+            <span>Wishlist</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={openCreate}
+            aria-label="Add listing"
+            title="Add listing"
+            className="w-12 h-12 -mt-3 rounded-2xl bg-gradient-to-b from-[#2f78c4] to-[#1d5fa7] hover:from-[#2b70b8] hover:to-[#185291] text-white shadow-md hover:shadow-lg active:scale-95 flex items-center justify-center border-2 border-white transition-all shrink-0"
+          >
+            <Plus className="w-7 h-7 stroke-[3]" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('trades')}
+            className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-xs font-bold relative transition-all ${
+              activeTab === 'trades'
+                ? 'text-[#1d5fa7] bg-sky-50'
+                : 'text-slate-600 hover:text-slate-950'
+            }`}
+          >
+            <ArrowLeftRight className={`w-5 h-5 ${activeTab === 'trades' ? 'stroke-[2.4]' : ''}`} />
+            <span>Trades</span>
+            {needsAction > 0 && <span className="w-2 h-2 rounded-full bg-rose-600 absolute top-1 right-2.5" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('profile')}
+            className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-xs font-bold relative transition-all ${
+              activeTab === 'profile'
+                ? 'text-[#1d5fa7] bg-sky-50'
+                : 'text-slate-600 hover:text-slate-950'
+            }`}
+          >
+            <User className={`w-5 h-5 ${activeTab === 'profile' ? 'stroke-[2.4]' : ''}`} />
+            <span>{uid ? 'Profile' : 'Sign In'}</span>
+          </button>
         </div>
       </nav>
     </div>
