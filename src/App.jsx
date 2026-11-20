@@ -11,7 +11,7 @@ const SUPPORT_EMAIL = 'barterboxsupport@gmail.com';
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
 const BW_CITIES = [
-  'All Cities', 'Gaborone', 'Francistown', 'Maun', 'Serowe', 'Molepolole',
+  'All Cities', 'Gaborone', 'Francistown', 'Mogoditshane', 'Ghanzi', 'Jwaneng', 'Thamaga', 'Maun', 'Serowe', 'Molepolole',
   'Kanye', 'Mahalapye', 'Mochudi', 'Palapye', 'Lobatse', 'Selibe Phikwe', 'Kasane'
 ];
 
@@ -162,12 +162,16 @@ const shuffleArray = (arr) => {
   return copy;
 };
 
+let sharedAudioCtx = null;
+
 const playMessageAlertSound = () => {
   if (typeof window === 'undefined') return;
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return;
-    const ctx = new AudioCtx();
+    sharedAudioCtx = sharedAudioCtx || new AudioCtx();
+    const ctx = sharedAudioCtx;
+    if (ctx.state === 'suspended') ctx.resume();
     const now = ctx.currentTime;
 
     const osc1 = ctx.createOscillator();
@@ -193,10 +197,6 @@ const playMessageAlertSound = () => {
     osc2.start(now + 0.08);
     osc1.stop(now + 0.16);
     osc2.stop(now + 0.3);
-
-    setTimeout(() => {
-      ctx.close().catch(() => {});
-    }, 450);
   } catch {
     // Audio playback can be blocked before first user gesture
   }
@@ -779,8 +779,6 @@ export default function App() {
   const [listingTypeFilter, setListingTypeFilter] = useState('all');
   const [tradeFilter, setTradeFilter] = useState('open');
 
-  const [checkedSafety, setCheckedSafety] = useState({});
-
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [settingsSection, setSettingsSection] = useState('edit');
   const [editFullName, setEditFullName] = useState('');
@@ -839,6 +837,28 @@ export default function App() {
   const [reviewComment, setReviewComment] = useState('');
 
   const uid = session?.user?.id;
+  const setF = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  const [reviewItemRating, setReviewItemRating] = useState(5);
+  const [safetyPopupFor, setSafetyPopupFor] = useState(null);
+  const [safetySeen, setSafetySeen] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('bb_safety_seen') || '{}'); } catch { return {}; }
+  });
+
+  useEffect(() => {
+    if (!uid || safetyPopupFor) return;
+    const next = proposals.find((p) => p.status === 'accepted' && !safetySeen[p.id]);
+    if (next) setSafetyPopupFor(next);
+  }, [proposals, uid, safetySeen, safetyPopupFor]);
+
+  const dismissSafetyPopup = () => {
+    if (!safetyPopupFor) return;
+    const updated = { ...safetySeen, [safetyPopupFor.id]: true };
+    setSafetySeen(updated);
+    try { localStorage.setItem('bb_safety_seen', JSON.stringify(updated)); } catch { /* ignore */ }
+    setSafetyPopupFor(null);
+  };
+
   const proposalIdsRef = useRef([]);
   const activeProposalIdRef = useRef(null);
   const activeTabRef = useRef(activeTab);
@@ -882,8 +902,6 @@ export default function App() {
     });
   };
 
-  const setF = (k) => (e) => setForm({ ...form, [k]: e.target.value });
-
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -893,6 +911,17 @@ export default function App() {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
+  }, []);
+
+  useEffect(() => {
+    const unlock = () => {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      sharedAudioCtx = sharedAudioCtx || new AudioCtx();
+      if (sharedAudioCtx.state === 'suspended') sharedAudioCtx.resume();
+    };
+    window.addEventListener('pointerdown', unlock, { once: true });
+    return () => window.removeEventListener('pointerdown', unlock);
   }, []);
 
   useEffect(() => {
@@ -1288,32 +1317,6 @@ export default function App() {
     setDeletingAccount(false);
     setShowSettingsModal(false);
     setActiveTab('explore');
-  };
-
-  const toggleSafetyCheck = (proposal, stepId) => {
-    if (!proposal?.id) return;
-    const isAcceptor = uid && proposal.receiver_id === uid;
-    if (!isAcceptor) return;
-
-    const currentChecks = checkedSafety[proposal.id] || {};
-    const nextValue = !currentChecks[stepId];
-    const nextChecks = { ...currentChecks, [stepId]: nextValue };
-    const allTickedNow = SAFETY_CHECKLIST.every((step) => !!nextChecks[step.id]);
-
-    if (allTickedNow) {
-      setCheckedSafety((prev) => {
-        const copy = { ...prev };
-        delete copy[proposal.id];
-        return copy;
-      });
-      openChat(proposal);
-      return;
-    }
-
-    setCheckedSafety((prev) => ({
-      ...prev,
-      [proposal.id]: nextChecks
-    }));
   };
 
   const fetchListings = async (shouldShuffle = false) => {
@@ -1742,22 +1745,40 @@ export default function App() {
   };
 
   const confirmCompletion = async (p) => {
-    const key = p.sender_id === uid ? 'proposer_confirmed' : 'owner_confirmed';
-    const { error } = await supabase.from('trade_completions').update({ [key]: true }).eq('proposal_id', p.id);
-    if (error) alert(error.message);
-    else { refreshAll(); fetchNotifications(); }
+    if (!supabase || !uid) return;
+    if (p.receiver_id !== uid) {
+      alert('Only the person who accepted this offer can confirm the trade.');
+      return;
+    }
+    const { error } = await supabase.rpc('confirm_trade_completed', { p_proposal_id: p.id });
+    if (error) { alert('Could not confirm trade: ' + error.message); return; }
+    await Promise.all([fetchProposals(), fetchListings(false), fetchMyListings(), fetchNotifications()]);
+    setReviewRating(5);
+    setReviewItemRating(5);
+    setReviewComment('');
+    setActiveTab('bartered');
+    setReviewFor({ ...p, status: 'completed' });
   };
 
   const submitReview = async (e) => {
     e.preventDefault();
     const p = reviewFor;
-    const { error } = await supabase.from('reviews').insert({
-      proposal_id: p.id, reviewer_id: uid,
+    const base = {
+      proposal_id: p.id,
+      reviewer_id: uid,
       reviewee_id: p.sender_id === uid ? p.receiver_id : p.sender_id,
-      rating: reviewRating, comment: reviewComment.trim() || null
-    });
+      rating: reviewRating,
+      comment: reviewComment.trim() || null
+    };
+    let { error } = await supabase.from('reviews').insert({ ...base, item_rating: reviewItemRating });
+    if (error && error.message.toLowerCase().includes('item_rating')) {
+      ({ error } = await supabase.from('reviews').insert(base));
+    }
     if (error) { alert('Could not save review: ' + error.message); return; }
-    setReviewFor(null); setReviewRating(5); setReviewComment('');
+    setReviewFor(null);
+    setReviewRating(5);
+    setReviewItemRating(5);
+    setReviewComment('');
     fetchProposals();
   };
 
@@ -1842,7 +1863,10 @@ export default function App() {
   }, [uid, activeTab, proposals, chatPreviews, lastReadMap, activeProposal?.id]);
 
   const needsAction = proposals.filter((p) =>
-    (p.status === 'pending' && p.receiver_id === uid) || (p.status === 'countered' && p.sender_id === uid)).length;
+    (p.status === 'pending' && p.receiver_id === uid) ||
+    (p.status === 'countered' && p.sender_id === uid) ||
+    (p.status === 'accepted' && p.receiver_id === uid)).length;
+  const barteredTrades = proposals.filter((p) => p.status === 'completed');
   const visibleTrades = proposals.filter((p) => TRADE_FILTERS[tradeFilter].statuses.includes(p.status));
 
   const sortedChats = useMemo(() => {
@@ -2326,7 +2350,12 @@ export default function App() {
 
         {activeTab === 'trades' && (
           <div className="space-y-4 max-w-2xl mx-auto">
-            <h2 className="font-extrabold text-2xl text-slate-950">Your Barter Proposals & History</h2>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <h2 className="font-extrabold text-2xl text-slate-950">Your Barter Proposals & History</h2>
+              <button type="button" onClick={() => setActiveTab('bartered')} className={BACK_BTN}>
+                <CheckCircle2 className="w-4 h-4" /> Bartered Items
+              </button>
+            </div>
             {!uid ? (
               <div className={`${CARD} p-8 text-center space-y-3`}>
                 <p className="text-base font-medium text-slate-700">Sign in to view your incoming and outgoing barter offers.</p>
@@ -2348,16 +2377,10 @@ export default function App() {
                   const amSender = p.sender_id === uid;
                   const isAcceptor = p.receiver_id === uid;
                   const other = amSender ? p.receiver : p.sender;
-                  const c = Array.isArray(p.completion) ? p.completion[0] : p.completion;
-                  const myDone = c ? (amSender ? c.proposer_confirmed : c.owner_confirmed) : false;
-                  const theirDone = c ? (amSender ? c.owner_confirmed : c.proposer_confirmed) : false;
                   const reviewed = (p.reviews || []).some((r) => r.reviewer_id === uid);
 
                   const targetCond = p.target_listing?.condition;
                   const offeredCond = p.offered_listing?.condition;
-
-                  const proposalChecks = checkedSafety[p.id] || {};
-                  const checkedCount = SAFETY_CHECKLIST.filter((s) => proposalChecks[s.id]).length;
 
                   return (
                     <div key={p.id} className={`${CARD} p-4 sm:p-5 space-y-3.5`}>
@@ -2398,49 +2421,31 @@ export default function App() {
                         </div>
                       )}
 
-                      {p.status === 'accepted' && isAcceptor && (
-                        <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-3.5 space-y-2.5">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-sm font-extrabold text-amber-950 flex items-center gap-1.5">
-                              <ShieldCheck className="w-4 h-4 text-[#1d5fa7] shrink-0" />
-                              Safety Tips Before Finalizing Trade Meet
-                            </span>
-                            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-950">
-                              {checkedCount}/{SAFETY_CHECKLIST.length} ticked
-                            </span>
-                          </div>
-                          <p className="text-xs font-semibold text-amber-900">
-                            Tick all {SAFETY_CHECKLIST.length} safety tips to open Trade Chat with {other?.full_name || 'this trader'}.
+                      {p.status === 'accepted' && (
+                        <div className="bg-sky-50 border border-sky-200 rounded-xl p-3.5 text-sm space-y-2.5">
+                          <p className="font-extrabold text-[#1d5fa7] flex items-center gap-1.5">
+                            <ShieldCheck className="w-4 h-4 shrink-0" /> Offer accepted. Meet up safely, then confirm.
                           </p>
-                          <div className="space-y-2">
-                            {SAFETY_CHECKLIST.map((tip) => {
-                              const isTicked = !!proposalChecks[tip.id];
-                              return (
-                                <label key={tip.id} className="flex items-start gap-2.5 text-sm text-slate-800 cursor-pointer select-none">
-                                  <input
-                                    type="checkbox"
-                                    checked={isTicked}
-                                    onChange={() => toggleSafetyCheck(p, tip.id)}
-                                    className="mt-1 h-4 w-4 rounded border-slate-400 text-[#1d5fa7] focus:ring-[#1d5fa7]"
-                                  />
-                                  <span className={isTicked ? 'line-through text-slate-500' : ''}>{tip.text}</span>
-                                </label>
-                              );
-                            })}
-                          </div>
+                          {isAcceptor ? (
+                            <>
+                              <p className="text-slate-700 font-medium">
+                                After you've met and swapped, confirm the trade below. Until you confirm, this trade stays open.
+                              </p>
+                              <button type="button" onClick={() => confirmCompletion(p)} className={`${SM} bg-emerald-600 text-white`}>
+                                <CheckCircle2 className="w-4 h-4" /> Confirm trade after meetup
+                              </button>
+                            </>
+                          ) : (
+                            <p className="text-slate-700 font-medium">
+                              Waiting for {other?.full_name || 'the other trader'} to confirm the trade after your meetup. The trade stays open until they do.
+                            </p>
+                          )}
+                          <button type="button" onClick={() => setSafetyPopupFor(p)} className="text-xs font-bold text-[#1d5fa7] underline">
+                            View safety tips
+                          </button>
                         </div>
                       )}
 
-                      {p.status === 'accepted' && (
-                        <div className="bg-sky-50 border border-sky-200 rounded-xl p-3.5 text-sm space-y-2">
-                          <p className="font-bold text-[#1d5fa7]">Both of you must confirm once the exchange has happened.</p>
-                          <div className="flex flex-wrap items-center gap-3 font-bold">
-                            <span className={myDone ? 'text-emerald-800' : 'text-slate-700'}>{myDone ? '✓ You confirmed' : 'You: not yet'}</span>
-                            <span className={theirDone ? 'text-emerald-800' : 'text-slate-700'}>{theirDone ? `✓ ${other?.full_name || 'They'} confirmed` : `${other?.full_name || 'They'}: not yet`}</span>
-                          </div>
-                          {!myDone && <button onClick={() => confirmCompletion(p)} className={`${SM} bg-emerald-600 text-white`}><CheckCircle2 className="w-4 h-4" /> Confirm trade completed</button>}
-                        </div>
-                      )}
                       <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                         <button onClick={() => openChat(p)} className={`${SM} bg-slate-900 text-white`}><MessageSquare className="w-4 h-4" /> Trade Chat</button>
                         <div className="flex flex-wrap gap-2">
@@ -2462,7 +2467,7 @@ export default function App() {
                             <button onClick={() => updateProposal(p.id, { status: 'withdrawn' })} className={`${SM} bg-slate-200 text-slate-800`}>Withdraw</button>
                           )}
                           {p.status === 'completed' && !reviewed && (
-                            <button onClick={() => { setReviewFor(p); setReviewRating(5); setReviewComment(''); }} className={`${SM} bg-amber-400 text-slate-950`}><Star className="w-4 h-4" /> Leave a review</button>
+                            <button onClick={() => { setReviewFor(p); setReviewRating(5); setReviewItemRating(5); setReviewComment(''); }} className={`${SM} bg-amber-400 text-slate-950`}><Star className="w-4 h-4" /> Leave a review</button>
                           )}
                           {p.status === 'completed' && reviewed && <span className="text-sm text-emerald-800 font-bold self-center">✓ Review submitted</span>}
                         </div>
@@ -2471,6 +2476,64 @@ export default function App() {
                   );
                 })}
               </>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'bartered' && (
+          <div className="space-y-4 max-w-2xl mx-auto">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="font-extrabold text-2xl text-slate-950">Bartered Items</h2>
+              <button type="button" onClick={() => setActiveTab('trades')} className={BACK_BTN}>
+                <ArrowLeft className="w-4 h-4" /> Trades
+              </button>
+            </div>
+            <p className="text-sm font-medium text-slate-600">Items you have already swapped on BarterBox.</p>
+            {!uid ? (
+              <div className={`${CARD} p-8 text-center space-y-3`}>
+                <p className="text-base font-medium text-slate-700">Sign in to see your bartered items.</p>
+                <button onClick={() => setActiveTab('profile')} className={`${PRIMARY} px-6 py-2.5`}>Go to Sign In</button>
+              </div>
+            ) : barteredTrades.length === 0 ? (
+              <div className={`${CARD} p-8 text-center space-y-2`}>
+                <Package className="w-9 h-9 text-[#1d5fa7] mx-auto" />
+                <p className="font-extrabold text-lg text-slate-900">No bartered items yet</p>
+                <p className="text-sm text-slate-600">Once a trade is confirmed after your meetup, the items you swapped will appear here.</p>
+              </div>
+            ) : (
+              barteredTrades.map((p) => {
+                const iAmLister = p.receiver_id === uid;
+                const partner = iAmLister ? p.sender : p.receiver;
+                const gaveText = iAmLister ? p.target_listing?.title : (p.offered_listing?.title || p.custom_offer);
+                const gotText = iAmLister ? (p.offered_listing?.title || p.custom_offer) : p.target_listing?.title;
+                const gaveImg = iAmLister ? p.target_listing?.image_url : p.offered_listing?.image_url;
+                const gotImg = iAmLister ? p.offered_listing?.image_url : p.target_listing?.image_url;
+                return (
+                  <div key={p.id} className={`${CARD} p-4 space-y-3`}>
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <span className="text-xs sm:text-sm font-bold px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-950 border border-emerald-300">
+                        Bartered with {partner?.full_name || 'a member'}
+                      </span>
+                      <span className="text-xs font-semibold text-slate-500">{ago(p.updated_at)}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[['You gave', gaveText, gaveImg], ['You received', gotText, gotImg]].map(([label, text, img]) => (
+                        <div key={label} className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+                          <div className="h-28 bg-slate-200">
+                            {img
+                              ? <img src={img} alt={text || label} className="w-full h-full object-cover" />
+                              : <div className="w-full h-full flex items-center justify-center text-xs font-bold text-slate-500 px-2 text-center">Custom offer</div>}
+                          </div>
+                          <div className="p-2.5">
+                            <span className="text-[11px] uppercase font-extrabold text-slate-500 block">{label}</span>
+                            <p className="text-sm font-extrabold text-slate-950 line-clamp-2">{text || 'Item'}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
         )}
@@ -2484,10 +2547,18 @@ export default function App() {
             {notifications.length === 0 ? (
               <div className={`${CARD} p-8 text-center text-base font-medium text-slate-600`}>You're all caught up. New offers, messages and trade updates will show here.</div>
             ) : notifications.map((n) => (
-              <button key={n.id} onClick={() => markRead(n)} className={`${CARD} w-full text-left p-4 flex items-start gap-3 hover:bg-slate-50 ${n.read ? '' : 'border-sky-300 bg-sky-50/60'}`}>
+              <button
+                key={n.id}
+                onClick={() => markRead(n)}
+                className={`w-full text-left p-4 flex items-start gap-3 rounded-2xl border shadow-sm transition ${
+                  n.read
+                    ? 'bg-slate-100 border-slate-200 hover:bg-slate-200/70'
+                    : 'bg-sky-100 border-sky-400 hover:bg-sky-200/70'
+                }`}
+              >
                 <span className={`mt-2 w-2.5 h-2.5 rounded-full shrink-0 ${n.read ? 'bg-slate-300' : 'bg-[#1d5fa7]'}`} />
                 <span className="flex-1">
-                  <span className="text-base font-semibold text-slate-900 block">{n.body}</span>
+                  <span className={`text-base block ${n.read ? 'font-medium text-slate-500' : 'font-extrabold text-slate-950'}`}>{n.body}</span>
                   <span className="text-xs font-semibold text-slate-500">{ago(n.created_at)}</span>
                 </span>
               </button>
@@ -3253,21 +3324,83 @@ export default function App() {
               <h2 className="font-extrabold text-xl text-slate-950">Rate this trade</h2>
               <button type="button" onClick={() => setReviewFor(null)} className="p-1.5 rounded-lg hover:bg-slate-100"><X className="w-5 h-5" /></button>
             </div>
-            <p className="text-sm text-slate-700">How was your exchange with <strong>{(reviewFor.sender_id === uid ? reviewFor.receiver : reviewFor.sender)?.full_name || 'this member'}</strong>?</p>
-            <Stars value={reviewRating} onChange={setReviewRating} />
+            <p className="text-sm text-slate-700">
+              Your trade with <strong>{(reviewFor.sender_id === uid ? reviewFor.receiver : reviewFor.sender)?.full_name || 'this member'}</strong> is complete. Ratings are optional, but they help the community.
+            </p>
+            <div className="space-y-1">
+              <span className={LABEL}>Overall trade experience</span>
+              <Stars value={reviewRating} onChange={setReviewRating} />
+            </div>
+            <div className="space-y-1">
+              <span className={LABEL}>The offer: {reviewFor.offered_listing?.title || reviewFor.custom_offer || 'item'}</span>
+              <Stars value={reviewItemRating} onChange={setReviewItemRating} />
+            </div>
             <textarea rows={3} placeholder="Add a comment (optional)" value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} className={INPUT} />
-            <button type="submit" className={`w-full ${PRIMARY} py-2.5`}>Submit review</button>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => setReviewFor(null)} className={`flex-1 ${SECONDARY_3D} py-2.5`}>Skip for now</button>
+              <button type="submit" className={`flex-1 ${PRIMARY} py-2.5`}>Submit ratings</button>
+            </div>
           </form>
+        </Modal>
+      )}
+
+      {safetyPopupFor && (
+        <Modal onClose={dismissSafetyPopup} className="max-w-md">
+          <div className="p-5 space-y-4">
+            <div className="flex items-center gap-2.5">
+              <ShieldCheck className="w-7 h-7 text-[#1d5fa7] shrink-0" />
+              <h2 className="font-extrabold text-xl text-slate-950">Offer accepted! Stay safe at your meetup</h2>
+            </div>
+            <ul className="space-y-2.5">
+              {SAFETY_CHECKLIST.map((tip) => (
+                <li key={tip.id} className="flex items-start gap-2 text-sm text-slate-800 font-medium">
+                  <Check className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
+                  <span>{tip.text}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-sm bg-sky-50 border border-sky-200 rounded-xl p-3 text-slate-800 font-medium">
+              {safetyPopupFor.receiver_id === uid
+                ? 'After you meet and swap, open Trades and tap "Confirm trade after meetup". The trade stays open until you do.'
+                : 'After you meet and swap, the person who accepted your offer will confirm the trade. It stays open until they do.'}
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => { const p = safetyPopupFor; dismissSafetyPopup(); openChat(p); }}
+                className={`flex-1 ${SECONDARY_3D} py-2.5`}
+              >
+                Open Trade Chat
+              </button>
+              <button type="button" onClick={dismissSafetyPopup} className={`flex-1 ${PRIMARY} py-2.5`}>
+                I Understand
+              </button>
+            </div>
+          </div>
         </Modal>
       )}
 
       {activeProposal && (
         <Modal onClose={() => setActiveProposal(null)} className="max-w-md h-[75vh] flex flex-col overflow-hidden">
           <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-            <div>
-              <h3 className="font-extrabold text-base text-slate-950">Trade Negotiation</h3>
-              <p className="text-xs font-semibold text-slate-600 line-clamp-1">{activeProposal.target_listing?.title}</p>
-            </div>
+            {(() => {
+              const amSender = activeProposal.sender_id === uid;
+              const partnerId = amSender ? activeProposal.receiver_id : activeProposal.sender_id;
+              const partner = amSender ? activeProposal.receiver : activeProposal.sender;
+              return (
+                <div className="min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => { setActiveProposal(null); openMemberProfile(partnerId, partner || {}); }}
+                    className="font-extrabold text-base text-[#1d5fa7] underline decoration-2 underline-offset-2 hover:text-[#14467c] truncate max-w-full text-left"
+                    title="View profile"
+                  >
+                    {partner?.full_name || 'BarterBox Member'}
+                  </button>
+                  <p className="text-xs font-semibold text-slate-600 line-clamp-1">Trade: {activeProposal.target_listing?.title}</p>
+                </div>
+              );
+            })()}
             <button onClick={() => setActiveProposal(null)} className="p-1.5 rounded-lg hover:bg-slate-100"><X className="w-4 h-4" /></button>
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-2.5 bg-slate-50/60">
@@ -3338,7 +3471,11 @@ export default function App() {
           >
             <ArrowLeftRight className={`w-5 h-5 ${activeTab === 'trades' ? 'stroke-[2.4]' : ''}`} />
             <span>Trades</span>
-            {needsAction > 0 && <span className="w-2 h-2 rounded-full bg-rose-600 absolute top-1 right-2.5" />}
+            {needsAction > 0 && (
+              <span className="absolute -top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-extrabold flex items-center justify-center">
+                {needsAction > 9 ? '9+' : needsAction}
+              </span>
+            )}
           </button>
 
           <button
