@@ -11,7 +11,7 @@ const SUPPORT_EMAIL = 'barterboxsupport@gmail.com';
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
 const BW_CITIES = [
-  'All Cities', 'Gaborone', 'Francistown', 'Mogoditshane', 'Ghanzi', 'Jwaneng', 'Thamaga', 'Maun', 'Serowe', 'Molepolole',
+  'All Cities', 'Gaborone', 'Francistown', 'Maun', 'Serowe', 'Molepolole',
   'Kanye', 'Mahalapye', 'Mochudi', 'Palapye', 'Lobatse', 'Selibe Phikwe', 'Kasane'
 ];
 
@@ -41,7 +41,7 @@ const SAFETY_CHECKLIST = [
 const FAQ_ITEMS = [
   {
     q: 'How does bartering work on BarterBox?',
-    a: 'Browse listings, send a barter offer using one of your active items or a custom good/service, negotiate in Trade Chat, and both confirm once the exchange is complete.'
+    a: 'Browse listings, send a barter offer using one of your active items or a custom good/service, negotiate in Trade Chat, and confirm once the exchange is complete.'
   },
   {
     q: 'Does BarterBox charge listing or trading fees?',
@@ -53,7 +53,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'How do I stay safe when meeting another trader?',
-    a: 'Always meet in public spaces during the day, inspect items before swapping, and use the Trade Safety Checklist on your Trades screen before finalizing a meetup.'
+    a: 'Always meet in public spaces during the day, inspect items before swapping, and read the safety tips that appear when an offer is accepted.'
   }
 ];
 
@@ -340,7 +340,7 @@ function TermsOfServiceModal({ onClose, onAccept }) {
             <li>A user can send a proposal on another user's listing, offering one of their own listings or a custom offer, and can attach a message.</li>
             <li>The listing owner can accept, decline or send a counter-offer. The sender can withdraw a proposal that is still pending.</li>
             <li>A trade is agreed only when both users have accepted the same terms in BarterBox. Messages in the chat are for discussion and do not by themselves make an agreement.</li>
-            <li>Once a proposal is accepted, both users are expected to complete the exchange honestly and on time. Either user may mark their side of the exchange as completed. A trade is treated as complete when both users have confirmed it.</li>
+            <li>Once a proposal is accepted, both users are expected to complete the exchange honestly and on time. After the exchange has happened, the user who accepted the offer confirms it in the app. The trade stays open until that confirmation is made.</li>
             <li>If you can no longer go ahead, tell the other user as early as possible and use the tools in the app to update the status.</li>
             <li>BarterBox does not hold goods, valuables or money, and does not provide escrow.</li>
           </ul>
@@ -491,7 +491,7 @@ function TermsOfServiceModal({ onClose, onAccept }) {
 
         <section className="space-y-1.5">
           <h3 className="font-extrabold text-base text-slate-950">23. Contact</h3>
-          <p>BarterBox Gaborone, Botswana Email: <SupportEmailLink subject="Contact BarterBox" /></p>
+          <p>BarterBox, Gaborone, Botswana. Email: <SupportEmailLink subject="Contact BarterBox" /></p>
         </section>
       </div>
 
@@ -518,7 +518,7 @@ function PrivacyPolicyModal({ onClose, onAccept }) {
           <div>
             <h2 className="font-extrabold text-lg sm:text-xl text-slate-950">BarterBox Privacy Policy</h2>
             <p className="text-xs font-semibold text-slate-600">
-              Gaborone, Botswana • <SupportEmailLink subject="BarterBox Privacy Inquiry" />
+              Effective date: 1 November 2026 • Gaborone, Botswana
             </p>
           </div>
         </div>
@@ -638,11 +638,11 @@ function PrivacyPolicyModal({ onClose, onAccept }) {
           <h3 className="font-extrabold text-base text-slate-950">6. How long we keep it</h3>
           <ul className="list-disc pl-5 space-y-1">
             <li><strong>Account and profile:</strong> until you delete your account.</li>
-            <li><strong>Listings:</strong> until you delete them or your account. Deleted listings are hidden from other users straight away and removed from our systems within (30) days, except where we must keep them (for example, as part of a trade record).</li>
-            <li><strong>Messages and trade records:</strong> while needed for the trade and for (12) months afterwards, so we can deal with disputes, reports and fraud, unless the law requires longer.</li>
+            <li><strong>Listings:</strong> until you delete them or your account. Deleted listings are hidden from other users straight away and removed from our systems within 30 days, except where we must keep them (for example, as part of a trade record).</li>
+            <li><strong>Messages and trade records:</strong> while needed for the trade and for 12 months afterwards, so we can deal with disputes, reports and fraud, unless the law requires longer.</li>
             <li><strong>Reviews:</strong> kept so the community can see an honest record. When you delete your account we remove your name from your reviews or anonymise them.</li>
-            <li><strong>Logs and security records:</strong> up to (12) months.</li>
-            <li><strong>Backups:</strong> deleted information is removed from backups on their normal cycle, usually within [90] days.</li>
+            <li><strong>Logs and security records:</strong> up to 12 months.</li>
+            <li><strong>Backups:</strong> deleted information is removed from backups on their normal cycle, usually within 90 days.</li>
           </ul>
         </section>
 
@@ -709,7 +709,7 @@ function PrivacyPolicyModal({ onClose, onAccept }) {
 
         <section className="space-y-1.5">
           <h3 className="font-extrabold text-base text-slate-950">14. Contact us</h3>
-          <p>BarterBox. Gaborone, Botswana • Email: <SupportEmailLink subject="Contact BarterBox" /></p>
+          <p>BarterBox, Gaborone, Botswana. Email: <SupportEmailLink subject="Contact BarterBox" /></p>
         </section>
       </div>
 
@@ -753,6 +753,10 @@ export default function App() {
   const [legalModal, setLegalModal] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [authMessage, setAuthMessage] = useState('');
+  const [pendingConfirmEmail, setPendingConfirmEmail] = useState('');
+  const [resending, setResending] = useState(false);
+  const [resendFeedback, setResendFeedback] = useState('');
+  const [emailJustConfirmed, setEmailJustConfirmed] = useState(false);
 
   const [resetMode, setResetMode] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
@@ -837,28 +841,6 @@ export default function App() {
   const [reviewComment, setReviewComment] = useState('');
 
   const uid = session?.user?.id;
-  const setF = (k) => (e) => setForm({ ...form, [k]: e.target.value });
-
-  const [reviewItemRating, setReviewItemRating] = useState(5);
-  const [safetyPopupFor, setSafetyPopupFor] = useState(null);
-  const [safetySeen, setSafetySeen] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('bb_safety_seen') || '{}'); } catch { return {}; }
-  });
-
-  useEffect(() => {
-    if (!uid || safetyPopupFor) return;
-    const next = proposals.find((p) => p.status === 'accepted' && !safetySeen[p.id]);
-    if (next) setSafetyPopupFor(next);
-  }, [proposals, uid, safetySeen, safetyPopupFor]);
-
-  const dismissSafetyPopup = () => {
-    if (!safetyPopupFor) return;
-    const updated = { ...safetySeen, [safetyPopupFor.id]: true };
-    setSafetySeen(updated);
-    try { localStorage.setItem('bb_safety_seen', JSON.stringify(updated)); } catch { /* ignore */ }
-    setSafetyPopupFor(null);
-  };
-
   const proposalIdsRef = useRef([]);
   const activeProposalIdRef = useRef(null);
   const activeTabRef = useRef(activeTab);
@@ -902,6 +884,28 @@ export default function App() {
     });
   };
 
+  const setF = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  const [reviewItemRating, setReviewItemRating] = useState(5);
+  const [safetyPopupFor, setSafetyPopupFor] = useState(null);
+  const [safetySeen, setSafetySeen] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('bb_safety_seen') || '{}'); } catch { return {}; }
+  });
+
+  useEffect(() => {
+    if (!uid || safetyPopupFor) return;
+    const next = proposals.find((p) => p.status === 'accepted' && !safetySeen[p.id]);
+    if (next) setSafetyPopupFor(next);
+  }, [proposals, uid, safetySeen, safetyPopupFor]);
+
+  const dismissSafetyPopup = () => {
+    if (!safetyPopupFor) return;
+    const updated = { ...safetySeen, [safetyPopupFor.id]: true };
+    setSafetySeen(updated);
+    try { localStorage.setItem('bb_safety_seen', JSON.stringify(updated)); } catch { /* ignore */ }
+    setSafetyPopupFor(null);
+  };
+
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -911,17 +915,6 @@ export default function App() {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
-
-  useEffect(() => {
-    const unlock = () => {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      sharedAudioCtx = sharedAudioCtx || new AudioCtx();
-      if (sharedAudioCtx.state === 'suspended') sharedAudioCtx.resume();
-    };
-    window.addEventListener('pointerdown', unlock, { once: true });
-    return () => window.removeEventListener('pointerdown', unlock);
   }, []);
 
   useEffect(() => {
@@ -971,6 +964,27 @@ export default function App() {
       setShowInstallModal(true);
     }
   };
+
+  useEffect(() => {
+    const unlock = () => {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      sharedAudioCtx = sharedAudioCtx || new AudioCtx();
+      if (sharedAudioCtx.state === 'suspended') sharedAudioCtx.resume();
+    };
+    window.addEventListener('pointerdown', unlock, { once: true });
+    return () => window.removeEventListener('pointerdown', unlock);
+  }, []);
+
+  useEffect(() => {
+    const raw = `${window.location.hash || ''}${window.location.search || ''}`;
+    if (raw.includes('type=signup')) setEmailJustConfirmed(true);
+    if (raw.includes('error_code=otp_expired')) {
+      setActiveTab('profile');
+      setAuthMessage('That confirmation link has expired. Sign in below and we will send you a new one.');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   const checkRecoveryUrl = () => {
     const hash = window.location.hash || '';
@@ -1034,7 +1048,11 @@ export default function App() {
     if (!supabase || !uid) return;
     const ch = supabase.channel('bb-notes-' + uid)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${uid}` },
-        () => { fetchNotifications(); fetchProposals(); })
+        (payload) => {
+          fetchNotifications();
+          fetchProposals();
+          if (payload?.new?.type !== 'message') playMessageAlertSound();
+        })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [uid]);
@@ -1513,25 +1531,66 @@ export default function App() {
     }
     setAuthLoading(true);
     setAuthMessage('');
+    const cleanEmail = email.trim();
     if (authMode === 'signup') {
       const { data, error } = await supabase.auth.signUp({
-        email: email.trim(), password, options: { data: { full_name: fullName, city } }
-      });
-      if (error) setAuthMessage(error.message);
-      else {
-        if (data?.user) {
-          await supabase.from('profiles').upsert({ id: data.user.id, full_name: fullName || email.split('@')[0], city: city || 'Gaborone' });
+        email: cleanEmail,
+        password,
+        options: {
+          data: { full_name: fullName, city, accepted_terms_at: new Date().toISOString() },
+          emailRedirectTo: window.location.origin
         }
-        const { data: login, error: loginError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-        if (loginError) setAuthMessage('Account created! Please sign in.');
-        else if (login?.session) { setSession(login.session); setActiveTab('explore'); }
+      });
+      if (error) {
+        setAuthMessage(error.message);
+      } else if (data?.session) {
+        // Email confirmation is switched off in Supabase: user is signed in straight away
+        if (data.user) {
+          await supabase.from('profiles').upsert({ id: data.user.id, full_name: fullName || cleanEmail.split('@')[0], city: city || 'Gaborone' });
+        }
+        setSession(data.session);
+        setActiveTab('explore');
+      } else if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        // Supabase returns an empty identities list when the email is already registered
+        setAuthMessage('An account with this email already exists. Try signing in, or use "Forgot password?".');
+        setAuthMode('login');
+      } else {
+        // Confirmation required: the user must click the link we emailed
+        setResendFeedback('');
+        setPendingConfirmEmail(cleanEmail);
       }
     } else {
-      const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-      if (error) setAuthMessage(error.message);
-      else { if (data?.session) setSession(data.session); setActiveTab('explore'); }
+      const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+      if (error) {
+        if (error.message.toLowerCase().includes('not confirmed')) {
+          setResendFeedback('');
+          setPendingConfirmEmail(cleanEmail);
+        } else {
+          setAuthMessage(error.message);
+        }
+      } else {
+        if (data?.session) setSession(data.session);
+        setActiveTab('explore');
+      }
     }
     setAuthLoading(false);
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!supabase || !pendingConfirmEmail) return;
+    setResending(true);
+    setResendFeedback('');
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: pendingConfirmEmail,
+      options: { emailRedirectTo: window.location.origin }
+    });
+    setResending(false);
+    setResendFeedback(
+      error
+        ? error.message
+        : `Another confirmation email is on its way to ${pendingConfirmEmail}. It can take a few minutes.`
+    );
   };
 
   const handleSendResetEmail = async (e) => {
@@ -1987,6 +2046,15 @@ export default function App() {
           </div>
         )}
       </header>
+
+      {emailJustConfirmed && uid && (
+        <div className="bg-emerald-100 border-b border-emerald-300 text-emerald-950">
+          <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3 text-sm font-bold">
+            <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 shrink-0" /> Email confirmed. Welcome to BarterBox!</span>
+            <button type="button" onClick={() => setEmailJustConfirmed(false)} className="p-1 rounded-lg hover:bg-emerald-200" aria-label="Dismiss"><X className="w-4 h-4" /></button>
+          </div>
+        </div>
+      )}
 
       <main className="max-w-5xl mx-auto px-4 pt-4">
         {(activeTab === 'explore' || activeTab === 'wishlist') && (
@@ -2445,7 +2513,6 @@ export default function App() {
                           </button>
                         </div>
                       )}
-
                       <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                         <button onClick={() => openChat(p)} className={`${SM} bg-slate-900 text-white`}><MessageSquare className="w-4 h-4" /> Trade Chat</button>
                         <div className="flex flex-wrap gap-2">
@@ -2610,7 +2677,31 @@ export default function App() {
               </div>
             ) : !uid ? (
               <div className={`${CARD} p-6 space-y-4`}>
-                {authMode === 'login' && resetMode ? (
+                {pendingConfirmEmail ? (
+                  <div className="text-center space-y-3.5">
+                    <div className="mx-auto w-14 h-14 rounded-2xl bg-sky-100 border border-sky-200 flex items-center justify-center">
+                      <Inbox className="w-7 h-7 text-[#1d5fa7]" />
+                    </div>
+                    <h2 className="font-extrabold text-2xl text-slate-950">Check your email</h2>
+                    <p className="text-sm text-slate-700 font-medium">
+                      We sent a confirmation link to <strong>{pendingConfirmEmail}</strong>. Tap the link to activate your account, then come back and sign in. It can take a few minutes, so check your spam folder too.
+                    </p>
+                    {resendFeedback && (
+                      <p className="text-sm font-bold text-[#1d5fa7] bg-sky-50 border border-sky-200 p-3 rounded-xl">{resendFeedback}</p>
+                    )}
+                    <button type="button" onClick={handleResendConfirmation} disabled={resending} className={`w-full ${PRIMARY} py-3 disabled:opacity-50`}>
+                      {resending ? 'Sending...' : 'Resend confirmation email'}
+                    </button>
+                    <div className="flex items-center justify-center gap-4 text-sm font-bold text-[#1d5fa7]">
+                      <button type="button" onClick={() => { setPendingConfirmEmail(''); setResendFeedback(''); setAuthMessage(''); setAuthMode('signup'); }} className="hover:underline">
+                        Use a different email
+                      </button>
+                      <button type="button" onClick={() => { setPendingConfirmEmail(''); setResendFeedback(''); setAuthMessage(''); setAuthMode('login'); }} className="hover:underline">
+                        Back to Sign In
+                      </button>
+                    </div>
+                  </div>
+                ) : authMode === 'login' && resetMode ? (
                   <>
                     <div className="text-center">
                       <h2 className="font-extrabold text-2xl text-slate-950">Reset Your Password</h2>
@@ -3464,12 +3555,12 @@ export default function App() {
             type="button"
             onClick={() => setActiveTab('trades')}
             className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-xs font-bold relative transition-all ${
-              activeTab === 'trades'
+              activeTab === 'trades' || activeTab === 'bartered'
                 ? 'text-[#1d5fa7] bg-sky-50'
                 : 'text-slate-600 hover:text-slate-950'
             }`}
           >
-            <ArrowLeftRight className={`w-5 h-5 ${activeTab === 'trades' ? 'stroke-[2.4]' : ''}`} />
+            <ArrowLeftRight className={`w-5 h-5 ${activeTab === 'trades' || activeTab === 'bartered' ? 'stroke-[2.4]' : ''}`} />
             <span>Trades</span>
             {needsAction > 0 && (
               <span className="absolute -top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-extrabold flex items-center justify-center">
