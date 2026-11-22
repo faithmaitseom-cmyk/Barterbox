@@ -129,11 +129,11 @@ const TRADE_FILTERS = {
   closed: { label: 'Closed', statuses: ['rejected', 'withdrawn'] }
 };
 
-const INPUT = 'w-full mt-1.5 px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-base text-slate-900 font-medium shadow-xs focus:outline-none focus:ring-2 focus:ring-[#1d5fa7]/30 focus:border-[#1d5fa7] transition';
+const INPUT = 'w-full mt-1.5 px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-base text-slate-900 font-medium shadow-xs focus:outline-none focus:ring-2 focus:ring-[#1e7be6]/30 focus:border-[#1e7be6] transition';
 const LABEL = 'text-sm font-bold text-slate-800 block';
-const PRIMARY = 'bg-gradient-to-b from-[#2f78c4] to-[#1d5fa7] hover:from-[#2b70b8] hover:to-[#185291] text-white font-bold rounded-xl text-sm sm:text-base shadow-sm hover:shadow active:scale-[0.99] transition-all';
+const PRIMARY = 'bg-gradient-to-b from-[#4a9bf2] to-[#1e7be6] hover:from-[#3d90ee] hover:to-[#1a6fd0] text-white font-bold rounded-xl text-sm sm:text-base shadow-sm hover:shadow active:scale-[0.99] transition-all';
 const SECONDARY_3D = 'bg-white hover:bg-slate-50 text-slate-900 font-bold rounded-xl text-sm border border-slate-300 shadow-xs active:scale-[0.99] transition-all';
-const BACK_BTN = 'text-sm font-bold text-[#1d5fa7] bg-sky-50 hover:bg-sky-100 border border-sky-200 px-3 py-1.5 rounded-xl shadow-xs flex items-center gap-1.5 transition-all';
+const BACK_BTN = 'text-sm font-bold text-[#1e7be6] bg-sky-50 hover:bg-sky-100 border border-sky-200 px-3 py-1.5 rounded-xl shadow-xs flex items-center gap-1.5 transition-all';
 const CARD = 'bg-white border border-slate-200/90 rounded-2xl shadow-sm hover:shadow-md transition-shadow';
 const SM = 'text-sm font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-xs active:scale-[0.99] transition-all';
 
@@ -209,7 +209,7 @@ function SupportEmailLink({ email = SUPPORT_EMAIL, subject = '' }) {
   return (
     <a
       href={href}
-      className="text-[#1d5fa7] font-extrabold underline decoration-2 hover:text-[#14467c] break-all"
+      className="text-[#1e7be6] font-extrabold underline decoration-2 hover:text-[#1559ab] break-all"
     >
       {email}
     </a>
@@ -241,7 +241,7 @@ function TermsOfServiceModal({ onClose, onAccept }) {
     <Modal onClose={onClose} className="max-w-2xl max-h-[88vh] flex flex-col overflow-hidden">
       <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
         <div className="flex items-center gap-2.5">
-          <Scale className="w-5 h-5 text-[#1d5fa7]" />
+          <Scale className="w-5 h-5 text-[#1e7be6]" />
           <div>
             <h2 className="font-extrabold text-lg sm:text-xl text-slate-950">BarterBox Terms of Service</h2>
             <p className="text-xs font-semibold text-slate-600">
@@ -514,7 +514,7 @@ function PrivacyPolicyModal({ onClose, onAccept }) {
     <Modal onClose={onClose} className="max-w-2xl max-h-[88vh] flex flex-col overflow-hidden">
       <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
         <div className="flex items-center gap-2.5">
-          <FileText className="w-5 h-5 text-[#1d5fa7]" />
+          <FileText className="w-5 h-5 text-[#1e7be6]" />
           <div>
             <h2 className="font-extrabold text-lg sm:text-xl text-slate-950">BarterBox Privacy Policy</h2>
             <p className="text-xs font-semibold text-slate-600">
@@ -1973,7 +1973,7 @@ export default function App() {
             />
             <div className="truncate">
               <span onClick={() => setActiveTab('explore')} className="font-black text-xl tracking-tight text-slate-950 cursor-pointer block leading-none">
-                Barter<span className="text-[#1d5fa7]">Box</span>
+                Barter<span className="text-[#1e7be6]">Box</span>
               </span>
               <span className="text-xs font-semibold text-slate-600 block mt-0.5 truncate">Swap Goods & Skills in BW</span>
             </div>
@@ -1983,7 +1983,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleInstallClick}
-                className="text-xs sm:text-sm font-bold text-[#1d5fa7] bg-amber-100 hover:bg-amber-200 border border-amber-300 px-3 py-1.5 rounded-xl shadow-xs transition-all"
+                className="text-xs sm:text-sm font-bold text-[#1e7be6] bg-amber-100 hover:bg-amber-200 border border-amber-300 px-3 py-1.5 rounded-xl shadow-xs transition-all"
               >
                 Install App
               </button>
@@ -1995,7 +1995,7 @@ export default function App() {
                   onClick={handleOpenInbox}
                   className={`relative p-2 rounded-xl border text-slate-800 transition ${
                     activeTab === 'messages'
-                      ? 'bg-sky-100 border-sky-300 text-[#1d5fa7]'
+                      ? 'bg-sky-100 border-sky-300 text-[#1e7be6]'
                       : 'bg-slate-100 hover:bg-slate-200 border-slate-200'
                   }`}
                   title="Messages"
@@ -2013,7 +2013,7 @@ export default function App() {
                   onClick={() => setActiveTab('notifications')}
                   className={`relative p-2 rounded-xl border text-slate-800 transition ${
                     activeTab === 'notifications'
-                      ? 'bg-sky-100 border-sky-300 text-[#1d5fa7]'
+                      ? 'bg-sky-100 border-sky-300 text-[#1e7be6]'
                       : 'bg-slate-100 hover:bg-slate-200 border-slate-200'
                   }`}
                   title="Notifications"
@@ -2060,7 +2060,7 @@ export default function App() {
         {(activeTab === 'explore' || activeTab === 'wishlist') && (
           <div className="space-y-4">
             {activeTab === 'explore' && (
-              <section className="relative overflow-hidden bg-gradient-to-br from-[#1d5fa7] via-[#246ab8] to-[#154880] text-white rounded-2xl p-5 sm:p-6 border border-sky-300/50 shadow-md">
+              <section className="relative overflow-hidden bg-gradient-to-br from-[#1e7be6] via-[#1a6fd0] to-[#1559ab] text-white rounded-2xl p-5 sm:p-6 border border-sky-300/50 shadow-md">
                 <div className="relative z-10 flex flex-col items-center text-center space-y-2">
                   <div className="p-1 bg-white rounded-2xl shadow-sm border border-amber-200">
                     <img
@@ -2083,7 +2083,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => setActiveTab('profile')}
-                        className="bg-white hover:bg-sky-50 text-[#1d5fa7] font-bold text-xs sm:text-sm px-3.5 py-1 rounded-full shadow-xs transition"
+                        className="bg-white hover:bg-sky-50 text-[#1e7be6] font-bold text-xs sm:text-sm px-3.5 py-1 rounded-full shadow-xs transition"
                       >
                         Start Trading Free →
                       </button>
@@ -2102,22 +2102,22 @@ export default function App() {
                     placeholder="Search seswaa, phones, plumbing, furniture..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#1d5fa7]/25 focus:border-[#1d5fa7] focus:bg-white transition"
+                    className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#1e7be6]/25 focus:border-[#1e7be6] focus:bg-white transition"
                   />
                 </div>
                 <div className="flex flex-wrap sm:flex-nowrap gap-2">
                   <div className="relative flex-1 sm:flex-initial">
                     <MapPin className="w-4 h-4 text-rose-600 absolute left-3 top-3 pointer-events-none" />
-                    <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} className="w-full pl-8 pr-7 py-2.5 bg-sky-50/80 border border-sky-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:border-[#1d5fa7]">
+                    <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} className="w-full pl-8 pr-7 py-2.5 bg-sky-50/80 border border-sky-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:border-[#1e7be6]">
                       {BW_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
-                  <select value={listingTypeFilter} onChange={(e) => setListingTypeFilter(e.target.value)} className="flex-1 sm:flex-initial px-3 py-2.5 bg-amber-50/80 border border-amber-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:border-[#1d5fa7]">
+                  <select value={listingTypeFilter} onChange={(e) => setListingTypeFilter(e.target.value)} className="flex-1 sm:flex-initial px-3 py-2.5 bg-amber-50/80 border border-amber-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:border-[#1e7be6]">
                     <option value="all">Goods & Services</option>
                     <option value="good">Goods Only</option>
                     <option value="service">Services Only</option>
                   </select>
-                  <select value={selectedCondition} onChange={(e) => setSelectedCondition(e.target.value)} aria-label="Filter by condition" className="flex-1 sm:flex-initial px-3 py-2.5 bg-emerald-50/80 border border-emerald-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:border-[#1d5fa7]">
+                  <select value={selectedCondition} onChange={(e) => setSelectedCondition(e.target.value)} aria-label="Filter by condition" className="flex-1 sm:flex-initial px-3 py-2.5 bg-emerald-50/80 border border-emerald-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:border-[#1e7be6]">
                     <option value="All">All Conditions</option>
                     {PRODUCT_CONDITIONS.map((cond) => <option key={cond} value={cond}>{cond}</option>)}
                   </select>
@@ -2131,7 +2131,7 @@ export default function App() {
                     onClick={() => setSelectedCategory(cat)}
                     className={`px-3.5 py-1.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${
                       selectedCategory === cat
-                        ? 'bg-[#1d5fa7] text-white shadow-xs'
+                        ? 'bg-[#1e7be6] text-white shadow-xs'
                         : 'bg-slate-100 text-slate-800 border border-slate-200 hover:bg-slate-200'
                     }`}
                   >
@@ -2152,7 +2152,7 @@ export default function App() {
               <div className={`${CARD} p-10 text-center text-base font-semibold text-slate-600`}>Loading Botswana marketplace...</div>
             ) : filteredListings.length === 0 ? (
               <div className={`${CARD} p-10 text-center space-y-2`}>
-                <Package className="w-9 h-9 text-[#1d5fa7] mx-auto" />
+                <Package className="w-9 h-9 text-[#1e7be6] mx-auto" />
                 <p className="font-extrabold text-lg text-slate-900">No listings match your filter</p>
                 <p className="text-sm text-slate-600">Try clearing filters or post an item to start trading!</p>
               </div>
@@ -2188,13 +2188,13 @@ export default function App() {
                             <MapPin className="w-3.5 h-3.5 text-rose-600 shrink-0" />
                             <span>{item.city}</span>
                             <span>•</span>
-                            <span className="text-[#1d5fa7] truncate">{item.category}</span>
+                            <span className="text-[#1e7be6] truncate">{item.category}</span>
                           </div>
                           <h3 className="font-extrabold text-lg text-slate-950 line-clamp-1">{item.title}</h3>
                           <p className="text-sm text-slate-700 line-clamp-2 mt-1 leading-snug">{item.description}</p>
                         </div>
                         <div className="bg-sky-50/90 border border-sky-200/80 rounded-xl p-2.5">
-                          <span className="text-[11px] uppercase tracking-wider font-extrabold text-[#1d5fa7] block">Looking For:</span>
+                          <span className="text-[11px] uppercase tracking-wider font-extrabold text-[#1e7be6] block">Looking For:</span>
                           <p className="text-sm font-bold text-slate-900 line-clamp-1 mt-0.5">{item.looking_for || 'Open to fair barter offers'}</p>
                         </div>
                       </div>
@@ -2226,7 +2226,7 @@ export default function App() {
                     {viewedMember.full_name || 'BarterBox Member'}
                   </h2>
                   {viewedMember.username && (
-                    <p className="text-sm font-bold text-[#1d5fa7] truncate">@{viewedMember.username}</p>
+                    <p className="text-sm font-bold text-[#1e7be6] truncate">@{viewedMember.username}</p>
                   )}
                   <p className="text-sm font-semibold text-slate-600 flex items-center gap-1">
                     <MapPin className="w-4 h-4 text-rose-600 shrink-0" />
@@ -2295,13 +2295,13 @@ export default function App() {
                               <MapPin className="w-3.5 h-3.5 text-rose-600" />
                               <span>{item.city}</span>
                               <span>•</span>
-                              <span className="text-[#1d5fa7] truncate">{item.category}</span>
+                              <span className="text-[#1e7be6] truncate">{item.category}</span>
                             </div>
                             <h4 className="font-extrabold text-base text-slate-950 line-clamp-1">{item.title}</h4>
                             <p className="text-sm text-slate-700 line-clamp-2 mt-1">{item.description}</p>
                           </div>
                           <div className="bg-sky-50/90 border border-sky-200/80 rounded-xl p-2">
-                            <span className="text-[10px] uppercase tracking-wider font-extrabold text-[#1d5fa7] block">Looking For:</span>
+                            <span className="text-[10px] uppercase tracking-wider font-extrabold text-[#1e7be6] block">Looking For:</span>
                             <p className="text-xs font-bold text-slate-900 line-clamp-1">{item.looking_for || 'Open to fair barter offers'}</p>
                           </div>
                         </div>
@@ -2359,7 +2359,7 @@ export default function App() {
               </div>
             ) : sortedChats.length === 0 ? (
               <div className={`${CARD} p-8 text-center space-y-3`}>
-                <MessageSquare className="w-9 h-9 text-[#1d5fa7] mx-auto" />
+                <MessageSquare className="w-9 h-9 text-[#1e7be6] mx-auto" />
                 <p className="font-extrabold text-lg text-slate-900">No trade chats yet</p>
                 <p className="text-sm text-slate-600">Send or receive a barter proposal on a listing to start a conversation.</p>
                 <button onClick={() => setActiveTab('explore')} className={`${PRIMARY} px-5 py-2.5`}>Browse Marketplace</button>
@@ -2396,7 +2396,7 @@ export default function App() {
                             {ago(timestamp)}
                           </span>
                         </div>
-                        <p className="text-xs font-bold text-[#1d5fa7] truncate">
+                        <p className="text-xs font-bold text-[#1e7be6] truncate">
                           Trade: {p.target_listing?.title || 'Listing'} ↔ {p.offered_listing?.title || p.custom_offer || 'Offer'}
                         </p>
                         <p className={`text-sm truncate ${isUnreadThread ? 'font-bold text-slate-950' : 'text-slate-700'}`}>
@@ -2405,7 +2405,7 @@ export default function App() {
                             : 'Tap to open Trade Chat and coordinate your swap.'}
                         </p>
                       </div>
-                      <span className={`${SM} bg-[#1d5fa7] text-white shrink-0`}>
+                      <span className={`${SM} bg-[#1e7be6] text-white shrink-0`}>
                         <MessageSquare className="w-4 h-4" /> Chat
                       </span>
                     </button>
@@ -2433,7 +2433,7 @@ export default function App() {
               <>
                 <div className="flex gap-2 flex-wrap">
                   {Object.entries(TRADE_FILTERS).map(([key, f]) => (
-                    <button key={key} onClick={() => setTradeFilter(key)} className={`px-4 py-1.5 rounded-xl text-sm font-bold transition ${tradeFilter === key ? 'bg-[#1d5fa7] text-white shadow-xs' : 'bg-white text-slate-800 border border-slate-200 hover:bg-slate-50'}`}>{f.label}</button>
+                    <button key={key} onClick={() => setTradeFilter(key)} className={`px-4 py-1.5 rounded-xl text-sm font-bold transition ${tradeFilter === key ? 'bg-[#1e7be6] text-white shadow-xs' : 'bg-white text-slate-800 border border-slate-200 hover:bg-slate-50'}`}>{f.label}</button>
                   ))}
                 </div>
                 {visibleTrades.length === 0 ? (
@@ -2473,7 +2473,7 @@ export default function App() {
                         <div className="space-y-1">
                           <span className="text-xs font-bold uppercase text-slate-500 block">Offered in Exchange:</span>
                           <div className="flex flex-wrap items-center gap-1.5">
-                            <strong className="text-[#1d5fa7] text-base">{p.offered_listing?.title || p.custom_offer}</strong>
+                            <strong className="text-[#1e7be6] text-base">{p.offered_listing?.title || p.custom_offer}</strong>
                             {p.offered_listing && offeredCond && (
                               <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded-md border ${CONDITION_BADGE[offeredCond] || CONDITION_BADGE.Good}`}>
                                 {offeredCond}
@@ -2491,7 +2491,7 @@ export default function App() {
 
                       {p.status === 'accepted' && (
                         <div className="bg-sky-50 border border-sky-200 rounded-xl p-3.5 text-sm space-y-2.5">
-                          <p className="font-extrabold text-[#1d5fa7] flex items-center gap-1.5">
+                          <p className="font-extrabold text-[#1e7be6] flex items-center gap-1.5">
                             <ShieldCheck className="w-4 h-4 shrink-0" /> Offer accepted. Meet up safely, then confirm.
                           </p>
                           {isAcceptor ? (
@@ -2508,7 +2508,7 @@ export default function App() {
                               Waiting for {other?.full_name || 'the other trader'} to confirm the trade after your meetup. The trade stays open until they do.
                             </p>
                           )}
-                          <button type="button" onClick={() => setSafetyPopupFor(p)} className="text-xs font-bold text-[#1d5fa7] underline">
+                          <button type="button" onClick={() => setSafetyPopupFor(p)} className="text-xs font-bold text-[#1e7be6] underline">
                             View safety tips
                           </button>
                         </div>
@@ -2563,7 +2563,7 @@ export default function App() {
               </div>
             ) : barteredTrades.length === 0 ? (
               <div className={`${CARD} p-8 text-center space-y-2`}>
-                <Package className="w-9 h-9 text-[#1d5fa7] mx-auto" />
+                <Package className="w-9 h-9 text-[#1e7be6] mx-auto" />
                 <p className="font-extrabold text-lg text-slate-900">No bartered items yet</p>
                 <p className="text-sm text-slate-600">Once a trade is confirmed after your meetup, the items you swapped will appear here.</p>
               </div>
@@ -2623,7 +2623,7 @@ export default function App() {
                     : 'bg-sky-100 border-sky-400 hover:bg-sky-200/70'
                 }`}
               >
-                <span className={`mt-2 w-2.5 h-2.5 rounded-full shrink-0 ${n.read ? 'bg-slate-300' : 'bg-[#1d5fa7]'}`} />
+                <span className={`mt-2 w-2.5 h-2.5 rounded-full shrink-0 ${n.read ? 'bg-slate-300' : 'bg-[#1e7be6]'}`} />
                 <span className="flex-1">
                   <span className={`text-base block ${n.read ? 'font-medium text-slate-500' : 'font-extrabold text-slate-950'}`}>{n.body}</span>
                   <span className="text-xs font-semibold text-slate-500">{ago(n.created_at)}</span>
@@ -2668,7 +2668,7 @@ export default function App() {
                     />
                   </div>
                   {recoveryFeedback && (
-                    <p className="text-sm font-bold text-[#1d5fa7] bg-sky-50 border border-sky-200 p-3 rounded-xl">{recoveryFeedback}</p>
+                    <p className="text-sm font-bold text-[#1e7be6] bg-sky-50 border border-sky-200 p-3 rounded-xl">{recoveryFeedback}</p>
                   )}
                   <button type="submit" disabled={updatingPassword} className={`w-full ${PRIMARY} py-3 disabled:opacity-50`}>
                     {updatingPassword ? 'Updating Password...' : 'Save New Password'}
@@ -2680,19 +2680,19 @@ export default function App() {
                 {pendingConfirmEmail ? (
                   <div className="text-center space-y-3.5">
                     <div className="mx-auto w-14 h-14 rounded-2xl bg-sky-100 border border-sky-200 flex items-center justify-center">
-                      <Inbox className="w-7 h-7 text-[#1d5fa7]" />
+                      <Inbox className="w-7 h-7 text-[#1e7be6]" />
                     </div>
                     <h2 className="font-extrabold text-2xl text-slate-950">Check your email</h2>
                     <p className="text-sm text-slate-700 font-medium">
                       We sent a confirmation link to <strong>{pendingConfirmEmail}</strong>. Tap the link to activate your account, then come back and sign in. It can take a few minutes, so check your spam folder too.
                     </p>
                     {resendFeedback && (
-                      <p className="text-sm font-bold text-[#1d5fa7] bg-sky-50 border border-sky-200 p-3 rounded-xl">{resendFeedback}</p>
+                      <p className="text-sm font-bold text-[#1e7be6] bg-sky-50 border border-sky-200 p-3 rounded-xl">{resendFeedback}</p>
                     )}
                     <button type="button" onClick={handleResendConfirmation} disabled={resending} className={`w-full ${PRIMARY} py-3 disabled:opacity-50`}>
                       {resending ? 'Sending...' : 'Resend confirmation email'}
                     </button>
-                    <div className="flex items-center justify-center gap-4 text-sm font-bold text-[#1d5fa7]">
+                    <div className="flex items-center justify-center gap-4 text-sm font-bold text-[#1e7be6]">
                       <button type="button" onClick={() => { setPendingConfirmEmail(''); setResendFeedback(''); setAuthMessage(''); setAuthMode('signup'); }} className="hover:underline">
                         Use a different email
                       </button>
@@ -2720,7 +2720,7 @@ export default function App() {
                         />
                       </div>
                       {resetFeedback && (
-                        <p className="text-sm font-bold text-[#1d5fa7] bg-sky-50 border border-sky-200 p-3 rounded-xl">{resetFeedback}</p>
+                        <p className="text-sm font-bold text-[#1e7be6] bg-sky-50 border border-sky-200 p-3 rounded-xl">{resetFeedback}</p>
                       )}
                       <button type="submit" disabled={sendingReset} className={`w-full ${PRIMARY} py-3 disabled:opacity-50`}>
                         {sendingReset ? 'Sending Link...' : 'Send Reset Link'}
@@ -2730,7 +2730,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => { setResetMode(false); setResetFeedback(''); }}
-                        className="text-sm text-[#1d5fa7] font-bold hover:underline"
+                        className="text-sm text-[#1e7be6] font-bold hover:underline"
                       >
                         Back to Sign In
                       </button>
@@ -2776,7 +2776,7 @@ export default function App() {
                               setResetFeedback('');
                               setResetMode(true);
                             }}
-                            className="text-sm text-[#1d5fa7] font-bold hover:underline"
+                            className="text-sm text-[#1e7be6] font-bold hover:underline"
                           >
                             Forgot password?
                           </button>
@@ -2791,14 +2791,14 @@ export default function App() {
                               required
                               checked={acceptedTerms}
                               onChange={(e) => setAcceptedTerms(e.target.checked)}
-                              className="mt-1 h-4 w-4 rounded border-slate-400 text-[#1d5fa7] focus:ring-[#1d5fa7]"
+                              className="mt-1 h-4 w-4 rounded border-slate-400 text-[#1e7be6] focus:ring-[#1e7be6]"
                             />
                             <span>
                               I am 18 or older and I agree to the{' '}
                               <button
                                 type="button"
                                 onClick={() => setLegalModal('terms')}
-                                className="text-[#1d5fa7] font-bold underline"
+                                className="text-[#1e7be6] font-bold underline"
                               >
                                 Terms of Service
                               </button>
@@ -2812,14 +2812,14 @@ export default function App() {
                               required
                               checked={acceptedPrivacy}
                               onChange={(e) => setAcceptedPrivacy(e.target.checked)}
-                              className="mt-1 h-4 w-4 rounded border-slate-400 text-[#1d5fa7] focus:ring-[#1d5fa7]"
+                              className="mt-1 h-4 w-4 rounded border-slate-400 text-[#1e7be6] focus:ring-[#1e7be6]"
                             />
                             <span>
                               I have read and agree to the{' '}
                               <button
                                 type="button"
                                 onClick={() => setLegalModal('privacy')}
-                                className="text-[#1d5fa7] font-bold underline"
+                                className="text-[#1e7be6] font-bold underline"
                               >
                                 Privacy Policy
                               </button>
@@ -2829,7 +2829,7 @@ export default function App() {
                         </div>
                       )}
 
-                      {authMessage && <p className="text-sm font-bold text-[#1d5fa7] bg-sky-50 border border-sky-200 p-3 rounded-xl">{authMessage}</p>}
+                      {authMessage && <p className="text-sm font-bold text-[#1e7be6] bg-sky-50 border border-sky-200 p-3 rounded-xl">{authMessage}</p>}
                       <button
                         type="submit"
                         disabled={authLoading || (authMode === 'signup' && (!acceptedTerms || !acceptedPrivacy))}
@@ -2846,7 +2846,7 @@ export default function App() {
                           setAuthMessage('');
                           setResetMode(false);
                         }}
-                        className="text-sm text-[#1d5fa7] font-bold hover:underline block mx-auto"
+                        className="text-sm text-[#1e7be6] font-bold hover:underline block mx-auto"
                       >
                         {authMode === 'login' ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
                       </button>
@@ -2854,7 +2854,7 @@ export default function App() {
                         <button
                           type="button"
                           onClick={() => setLegalModal('terms')}
-                          className="hover:text-[#1d5fa7] underline"
+                          className="hover:text-[#1e7be6] underline"
                         >
                           Terms of Service
                         </button>
@@ -2862,7 +2862,7 @@ export default function App() {
                         <button
                           type="button"
                           onClick={() => setLegalModal('privacy')}
-                          className="hover:text-[#1d5fa7] underline"
+                          className="hover:text-[#1e7be6] underline"
                         >
                           Privacy Policy
                         </button>
@@ -2882,7 +2882,7 @@ export default function App() {
                     />
                     <div className="min-w-0">
                       <h2 className="font-extrabold text-xl text-slate-950 truncate">{profile?.full_name || session.user.email}</h2>
-                      {profile?.username && <p className="text-sm text-[#1d5fa7] font-bold truncate">@{profile.username}</p>}
+                      {profile?.username && <p className="text-sm text-[#1e7be6] font-bold truncate">@{profile.username}</p>}
                       <p className="text-sm font-medium text-slate-600 flex items-center gap-1 mt-0.5"><MapPin className="w-4 h-4 text-rose-600" /> {profile?.city || 'Botswana'}</p>
                       <p className="text-sm font-semibold text-slate-700 flex items-center gap-1 mt-1">
                         <Star className="w-4 h-4 fill-amber-400 text-amber-500" />
@@ -2892,7 +2892,7 @@ export default function App() {
                   </div>
                   <div className="flex flex-col gap-2 shrink-0">
                     <button onClick={() => openSettings('edit')} className={`${SECONDARY_3D} px-3 py-1.5 flex items-center gap-1.5`}>
-                      <Settings className="w-4 h-4 text-[#1d5fa7]" /> Settings
+                      <Settings className="w-4 h-4 text-[#1e7be6]" /> Settings
                     </button>
                     <button onClick={handleLogout} className="text-sm font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
                       <LogOut className="w-4 h-4" /> Sign Out
@@ -3019,7 +3019,7 @@ export default function App() {
           <div className="p-5 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div className="flex items-center gap-2">
-                <Settings className="w-5 h-5 text-[#1d5fa7]" />
+                <Settings className="w-5 h-5 text-[#1e7be6]" />
                 <h2 className="font-extrabold text-xl text-slate-950">Account & App Settings</h2>
               </div>
               <button onClick={() => setShowSettingsModal(false)} className="p-1.5 rounded-lg hover:bg-slate-100"><X className="w-5 h-5" /></button>
@@ -3040,7 +3040,7 @@ export default function App() {
                   onClick={() => { setSettingsSection(id); setSettingsNotice(''); }}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition ${
                     settingsSection === id
-                      ? id === 'delete' ? 'bg-rose-600 text-white' : 'bg-[#1d5fa7] text-white'
+                      ? id === 'delete' ? 'bg-rose-600 text-white' : 'bg-[#1e7be6] text-white'
                       : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
                   }`}
                 >
@@ -3067,7 +3067,7 @@ export default function App() {
             </div>
 
             {settingsNotice && (
-              <div className="bg-sky-50 border border-sky-200 text-[#1d5fa7] text-sm font-bold p-3 rounded-xl">
+              <div className="bg-sky-50 border border-sky-200 text-[#1e7be6] text-sm font-bold p-3 rounded-xl">
                 {settingsNotice}
               </div>
             )}
@@ -3082,7 +3082,7 @@ export default function App() {
                   />
                   <div className="space-y-1">
                     <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 inline-flex items-center gap-1.5">
-                      <Upload className="w-4 h-4 text-[#1d5fa7]" />
+                      <Upload className="w-4 h-4 text-[#1e7be6]" />
                       <span>{uploadingAvatar ? 'Uploading...' : 'Upload New Profile Picture'}</span>
                       <input type="file" accept="image/*" onChange={handleAvatarUpload} disabled={uploadingAvatar} className="hidden" />
                     </label>
@@ -3130,7 +3130,7 @@ export default function App() {
                 </div>
                 <div className="flex gap-2">
                   <button type="button" onClick={() => setSettingsSection('faq')} className={`${SM} bg-slate-200 text-slate-900`}>Browse FAQ</button>
-                  <button type="button" onClick={() => setSettingsSection('problem')} className={`${SM} bg-[#1d5fa7] text-white`}>Report a Problem</button>
+                  <button type="button" onClick={() => setSettingsSection('problem')} className={`${SM} bg-[#1e7be6] text-white`}>Report a Problem</button>
                 </div>
               </div>
             )}
@@ -3254,7 +3254,7 @@ export default function App() {
             <div className="p-5 space-y-4">
               <div>
                 <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm font-bold text-slate-600">
-                  <span className="bg-sky-100 text-[#1d5fa7] font-extrabold px-2.5 py-0.5 rounded-full uppercase">{selectedListing.type}</span>
+                  <span className="bg-sky-100 text-[#1e7be6] font-extrabold px-2.5 py-0.5 rounded-full uppercase">{selectedListing.type}</span>
                   <span className={`font-extrabold px-2.5 py-0.5 rounded-full border ${CONDITION_BADGE[selectedListing.condition || 'Good'] || CONDITION_BADGE.Good}`}>
                     Condition: {selectedListing.condition || 'Good'}
                   </span>
@@ -3273,7 +3273,7 @@ export default function App() {
                           city: selectedListing.profiles?.city || selectedListing.city
                         });
                       }}
-                      className="text-[#1d5fa7] hover:text-[#14467c] bg-sky-50 hover:bg-sky-100 border border-sky-200 px-2 py-0.5 rounded-lg font-extrabold underline decoration-2 underline-offset-2 transition cursor-pointer"
+                      className="text-[#1e7be6] hover:text-[#1559ab] bg-sky-50 hover:bg-sky-100 border border-sky-200 px-2 py-0.5 rounded-lg font-extrabold underline decoration-2 underline-offset-2 transition cursor-pointer"
                     >
                       {posterName}
                     </button>
@@ -3331,7 +3331,7 @@ export default function App() {
             <form onSubmit={handleSaveListing} className="space-y-3.5">
               <div className="grid grid-cols-2 gap-2">
                 {[['good', 'Physical Good'], ['service', 'Skill / Service']].map(([val, text]) => (
-                  <button key={val} type="button" onClick={() => setForm({ ...form, type: val })} className={`py-2 rounded-xl text-sm font-bold border transition ${form.type === val ? 'bg-[#1d5fa7] text-white border-[#1d5fa7]' : 'bg-white text-slate-800 border-slate-200'}`}>{text}</button>
+                  <button key={val} type="button" onClick={() => setForm({ ...form, type: val })} className={`py-2 rounded-xl text-sm font-bold border transition ${form.type === val ? 'bg-[#1e7be6] text-white border-[#1e7be6]' : 'bg-white text-slate-800 border-slate-200'}`}>{text}</button>
                 ))}
               </div>
               <div>
@@ -3370,7 +3370,7 @@ export default function App() {
                 <label className={LABEL}>Listing Photo (Upload from Device or Paste URL)</label>
                 <div className="mt-1.5 flex items-center gap-2">
                   <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 flex items-center gap-1.5 transition">
-                    <Upload className="w-4 h-4 text-[#1d5fa7]" />
+                    <Upload className="w-4 h-4 text-[#1e7be6]" />
                     <span>{uploadingImage ? 'Uploading...' : 'Choose File'}</span>
                     <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploadingImage} className="hidden" />
                   </label>
@@ -3439,7 +3439,7 @@ export default function App() {
         <Modal onClose={dismissSafetyPopup} className="max-w-md">
           <div className="p-5 space-y-4">
             <div className="flex items-center gap-2.5">
-              <ShieldCheck className="w-7 h-7 text-[#1d5fa7] shrink-0" />
+              <ShieldCheck className="w-7 h-7 text-[#1e7be6] shrink-0" />
               <h2 className="font-extrabold text-xl text-slate-950">Offer accepted! Stay safe at your meetup</h2>
             </div>
             <ul className="space-y-2.5">
@@ -3483,7 +3483,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => { setActiveProposal(null); openMemberProfile(partnerId, partner || {}); }}
-                    className="font-extrabold text-base text-[#1d5fa7] underline decoration-2 underline-offset-2 hover:text-[#14467c] truncate max-w-full text-left"
+                    className="font-extrabold text-base text-[#1e7be6] underline decoration-2 underline-offset-2 hover:text-[#1559ab] truncate max-w-full text-left"
                     title="View profile"
                   >
                     {partner?.full_name || 'BarterBox Member'}
@@ -3501,14 +3501,14 @@ export default function App() {
               const isMe = msg.sender_id === uid;
               return (
                 <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                  <div className={`max-w-[82%] px-3.5 py-2 rounded-2xl text-sm font-medium ${isMe ? 'bg-[#1d5fa7] text-white rounded-br-none shadow-xs' : 'bg-white border border-slate-200 text-slate-900 rounded-bl-none shadow-xs'}`}>{msg.content}</div>
+                  <div className={`max-w-[82%] px-3.5 py-2 rounded-2xl text-sm font-medium ${isMe ? 'bg-[#1e7be6] text-white rounded-br-none shadow-xs' : 'bg-white border border-slate-200 text-slate-900 rounded-bl-none shadow-xs'}`}>{msg.content}</div>
                 </div>
               );
             })}
           </div>
           <form onSubmit={handleSendMessage} className="p-3 border-t border-slate-200 bg-white flex gap-2">
-            <input type="text" placeholder="Write a message..." value={newMessage} onChange={(e) => setNewMessage(e.target.value)} className="flex-1 px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-medium focus:outline-none focus:border-[#1d5fa7]" />
-            <button type="submit" className="bg-[#1d5fa7] text-white p-2.5 rounded-xl shadow-xs hover:bg-[#164b84] active:scale-[0.98]" title="Send"><Send className="w-4 h-4" /></button>
+            <input type="text" placeholder="Write a message..." value={newMessage} onChange={(e) => setNewMessage(e.target.value)} className="flex-1 px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-medium focus:outline-none focus:border-[#1e7be6]" />
+            <button type="submit" className="bg-[#1e7be6] text-white p-2.5 rounded-xl shadow-xs hover:bg-[#1a6fd0] active:scale-[0.98]" title="Send"><Send className="w-4 h-4" /></button>
           </form>
         </Modal>
       )}
@@ -3520,7 +3520,7 @@ export default function App() {
             onClick={() => setActiveTab('explore')}
             className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-xs font-bold relative transition-all ${
               activeTab === 'explore' || activeTab === 'memberProfile'
-                ? 'text-[#1d5fa7] bg-sky-50'
+                ? 'text-[#1e7be6] bg-sky-50'
                 : 'text-slate-600 hover:text-slate-950'
             }`}
           >
@@ -3533,7 +3533,7 @@ export default function App() {
             onClick={() => setActiveTab('wishlist')}
             className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-xs font-bold relative transition-all ${
               activeTab === 'wishlist'
-                ? 'text-[#1d5fa7] bg-sky-50'
+                ? 'text-[#1e7be6] bg-sky-50'
                 : 'text-slate-600 hover:text-slate-950'
             }`}
           >
@@ -3546,7 +3546,7 @@ export default function App() {
             onClick={openCreate}
             aria-label="Add listing"
             title="Add listing"
-            className="w-12 h-12 -mt-3 rounded-2xl bg-gradient-to-b from-[#2f78c4] to-[#1d5fa7] hover:from-[#2b70b8] hover:to-[#185291] text-white shadow-md hover:shadow-lg active:scale-95 flex items-center justify-center border-2 border-white transition-all shrink-0"
+            className="w-12 h-12 -mt-3 rounded-2xl bg-gradient-to-b from-[#4a9bf2] to-[#1e7be6] hover:from-[#3d90ee] hover:to-[#1a6fd0] text-white shadow-md hover:shadow-lg active:scale-95 flex items-center justify-center border-2 border-white transition-all shrink-0"
           >
             <Plus className="w-7 h-7 stroke-[3]" />
           </button>
@@ -3556,7 +3556,7 @@ export default function App() {
             onClick={() => setActiveTab('trades')}
             className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-xs font-bold relative transition-all ${
               activeTab === 'trades' || activeTab === 'bartered'
-                ? 'text-[#1d5fa7] bg-sky-50'
+                ? 'text-[#1e7be6] bg-sky-50'
                 : 'text-slate-600 hover:text-slate-950'
             }`}
           >
@@ -3574,7 +3574,7 @@ export default function App() {
             onClick={() => setActiveTab('profile')}
             className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl text-xs font-bold relative transition-all ${
               activeTab === 'profile'
-                ? 'text-[#1d5fa7] bg-sky-50'
+                ? 'text-[#1e7be6] bg-sky-50'
                 : 'text-slate-600 hover:text-slate-950'
             }`}
           >
